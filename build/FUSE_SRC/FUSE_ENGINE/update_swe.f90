@@ -47,7 +47,9 @@ IF (MOD(timDat%IY,4).EQ.0) THEN
 ELSE
  LEAP = .FALSE.
 ENDIF
+
 JDAY = CUMD(timDat%IM) + timDat%ID
+
 IF (LEAP) THEN   ! calculate melt factor from MFMAX, MFMIN and day of year
  MF = ((0.5_sp*SIN(((JDAY-81._sp)*2._sp*PI)/366._sp))+0.5_sp)*(MPARAM%MFMAX - MPARAM%MFMIN) + MPARAM%MFMIN
 ELSE
@@ -100,10 +102,10 @@ DO ISNW=1,N_BANDS
  IF (TEMP_Z.GT.MPARAM%PXTEMP) THEN
   SELECT CASE(SMODL%iRFERR)
    CASE(iopt_additive_e) ! additive rainfall error
-  M_FLUX%EFF_PPT = M_FLUX%EFF_PPT + MBANDS(ISNW)%AF * &
+   M_FLUX%EFF_PPT = M_FLUX%EFF_PPT + MBANDS(ISNW)%AF * &
    (MAX(0.0_sp, PRECIP_Z + MPARAM%RFERR_ADD) + MBANDS(ISNW)%SNOWMELT)
    CASE(iopt_multiplc_e) ! multiplicative rainfall error
-  M_FLUX%EFF_PPT = M_FLUX%EFF_PPT + MBANDS(ISNW)%AF * &
+   M_FLUX%EFF_PPT = M_FLUX%EFF_PPT + MBANDS(ISNW)%AF * &
    (PRECIP_Z * MPARAM%RFERR_MLT +  MBANDS(ISNW)%SNOWMELT)
    CASE DEFAULT       ! check for errors
     print *, "SMODL%iRFERR must be either iopt_additive_e or iopt_multiplc_e"

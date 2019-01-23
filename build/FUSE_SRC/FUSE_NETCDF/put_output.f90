@@ -1,4 +1,5 @@
 SUBROUTINE PUT_OUTPUT(iSpat1,iSpat2,ITIM,IMOD,IPAR)
+
   ! ---------------------------------------------------------------------------------------
   ! Creator:
   ! --------
@@ -12,7 +13,8 @@ SUBROUTINE PUT_OUTPUT(iSpat1,iSpat2,ITIM,IMOD,IPAR)
   USE model_defn                                        ! model definition (includes filename)
   USE metaoutput                                        ! metadata for time-varying model output
   USE varextract_module                                 ! interface for the function to extract variables
-  USE multiforce,ONLY:timDat                            ! time data
+  USE fuse_fileManager,only: Q_ONLY                     ! only write streamflow to output file?
+  USE multiforce,ONLY: timDat                           ! time data
   USE multistate, only: ncid_out                        ! NetCDF output file ID
 
   IMPLICIT NONE
@@ -35,10 +37,11 @@ SUBROUTINE PUT_OUTPUT(iSpat1,iSpat2,ITIM,IMOD,IPAR)
   INCLUDE 'netcdf.inc'                                  ! use netCDF libraries
   ! ---------------------------------------------------------------------------------------
   ! open file
-  IERR = NF_OPEN(TRIM(FNAME_NETCDF),NF_WRITE,ncid_out); CALL HANDLE_ERR(IERR)
+  IERR = NF_OPEN(TRIM(FNAME_NETCDF_RUNS),NF_WRITE,ncid_out); CALL HANDLE_ERR(IERR)
+
   ! define indices for model output
-!  INDX = (/iSpat1,iSpat2,ITIM,IMOD,IPAR/)
   INDX = (/iSpat1,iSpat2,ITIM/)
+
   ! loop through time-varying model output
   DO IVAR=1,NOUTVAR
 
@@ -47,10 +50,11 @@ SUBROUTINE PUT_OUTPUT(iSpat1,iSpat2,ITIM,IMOD,IPAR)
         WRITE_VAR=.FALSE.
         IF (TRIM(VNAME(IVAR)).EQ.'ppt') WRITE_VAR=.TRUE.
         IF (TRIM(VNAME(IVAR)).EQ.'pet') WRITE_VAR=.TRUE.
+        IF (TRIM(VNAME(IVAR)).EQ.'obsq') WRITE_VAR=.TRUE.
         IF (TRIM(VNAME(IVAR)).EQ.'evap_1') WRITE_VAR=.TRUE.
         IF (TRIM(VNAME(IVAR)).EQ.'evap_2') WRITE_VAR=.TRUE.
         IF (TRIM(VNAME(IVAR)).EQ.'q_instnt') WRITE_VAR=.TRUE.
-        !IF (TRIM(VNAME(IVAR)).EQ.'q_routed') WRITE_VAR=.TRUE.
+        IF (TRIM(VNAME(IVAR)).EQ.'q_routed') WRITE_VAR=.TRUE.
         IF (TRIM(VNAME(IVAR)).EQ.'watr_1')   WRITE_VAR=.TRUE.
         IF (TRIM(VNAME(IVAR)).EQ.'watr_2')   WRITE_VAR=.TRUE.
         IF (TRIM(VNAME(IVAR)).EQ.'swe_tot')   WRITE_VAR=.TRUE.
@@ -68,12 +72,13 @@ SUBROUTINE PUT_OUTPUT(iSpat1,iSpat2,ITIM,IMOD,IPAR)
   tDat = timDat%dtime ! convert to actual single precision
   ierr = nf_inq_varid(ncid_out,'time',ivar_id); CALL handle_err(ierr)        ! get variable ID for time
   ierr = nf_put_var1_real(ncid_out,ivar_id,itim,tDat); CALL handle_err(ierr) ! write time variable
+
   ! close NetCDF file
   IERR = NF_CLOSE(ncid_out)
-  ! ---------------------------------------------------------------------------------------
+
 END SUBROUTINE PUT_OUTPUT
 
-SUBROUTINE PUT_GOUTPUT_3D(istart,numtim)
+SUBROUTINE PUT_GOUTPUT_3D(istart_sim,istart_in,numtim,IPSET)
   ! ---------------------------------------------------------------------------------------
   ! Creator:
   ! --------
@@ -87,39 +92,46 @@ SUBROUTINE PUT_GOUTPUT_3D(istart,numtim)
   USE model_defn                                        ! model definition (includes filename)
   USE metaoutput                                        ! metadata for time-varying model output
   USE varextract_module                                 ! interface for the function to extract variables
-  USE multiforce, ONLY: timDat                          ! time data
+  USE fuse_fileManager,only: Q_ONLY                     ! only write streamflow to output file?
+
+  USE multiforce, ONLY: timDat,time_steps               ! time data
   USE multistate, only: ncid_out                        ! NetCDF output file ID
   USE multiforce, ONLY: nspat1,nspat2                   ! spatial dimensions
   USE multiforce, ONLY: gForce_3d                       ! test only
   USE multiforce, only: NUMTIM                          ! number of data steps
 
   IMPLICIT NONE
+
   ! input
-  INTEGER(I4B), INTENT(IN)               :: ISTART      ! index start time step
+  INTEGER(I4B), INTENT(IN)               :: istart_sim  ! index start time step relative to numtim_sim
+  INTEGER(I4B), INTENT(IN)               :: istart_in   ! index start time step relative to numtim_in - for time dimension
   INTEGER(I4B), INTENT(IN)               :: numtim      ! number of time steps to write
+  INTEGER(I4B), INTENT(IN)               :: IPSET       ! parameter set index
+
   ! internal
   LOGICAL(LGT)                           :: WRITE_VAR   ! used to denote if the variable is written
   INTEGER(I4B)                           :: IERR        ! error code
-  INTEGER(I4B), DIMENSION(3)             :: IND_START   ! start indices
-  INTEGER(I4B), DIMENSION(3)             :: IND_COUNT   ! count indices
+  INTEGER(I4B), DIMENSION(4)             :: IND_START   ! start indices
+  INTEGER(I4B), DIMENSION(4)             :: IND_COUNT   ! count indices
   INTEGER(I4B)                           :: IVAR        ! loop through variables
   REAL(SP)                               :: XVAR        ! desired variable (SP NOT NECESSARILY SP)
   REAL(MSP)                              :: AVAR        ! desired variable (SINGLE PRECISION)
-  REAL(SP) ,DIMENSION(nspat1,nspat2,numtim)    :: XVAR_3d        ! desired variable (SINGLE PRECISION)
-  REAL(MSP) ,DIMENSION(nspat1,nspat2,numtim)   :: AVAR_3d        ! desired variable (SINGLE PRECISION)
-  REAL(MSP)                              :: tDat        ! time data
+  REAL(SP), DIMENSION(nspat1,nspat2,numtim)    :: XVAR_3d        ! desired variable (SINGLE PRECISION)
+  REAL(MSP), DIMENSION(nspat1,nspat2,numtim)   :: AVAR_3d        ! desired variable (SINGLE PRECISION)
+  REAL(MSP), DIMENSION(:), ALLOCATABLE   :: tDat            ! time data
+  REAL(SP), DIMENSION(:), ALLOCATABLE    :: time_steps_sub  ! time data
   INTEGER(I4B)                           :: IVAR_ID     ! variable ID
   INCLUDE 'netcdf.inc'                                  ! use netCDF libraries
 
   ! open file
-  IERR = NF_OPEN(TRIM(FNAME_NETCDF),NF_WRITE,ncid_out); CALL HANDLE_ERR(IERR)
+  IERR = NF_OPEN(TRIM(FNAME_NETCDF_RUNS),NF_WRITE,ncid_out); CALL HANDLE_ERR(IERR)
 
   ! define indices for model output
-  IND_START = (/1,1,istart/) ! The indices are relative to 1, i.e. the first data value of a variable would have index (1, 1, ..., 1)
-  IND_COUNT = (/nspat1,nspat2,numtim/)
+  IND_START = (/1,1,IPSET,istart_sim/)     ! the indices start at 1, i.e. first element in (1, 1, ..., 1)
+  IND_COUNT = (/nspat1,nspat2,1,numtim/)   ! third element is 1 because we only write results for one parameter set at a time
 
-  !PRINT *,  'IND_START = ', IND_START
-  !PRINT *,  'IND_COUNT = ', IND_COUNT
+  PRINT *, 'IND_START=', IND_START
+  PRINT *, 'IND_COUNT=', IND_COUNT
 
   ! loop through time-varying model output
   DO IVAR=1,NOUTVAR
@@ -127,40 +139,44 @@ SUBROUTINE PUT_GOUTPUT_3D(istart,numtim)
     ! check if there is a need to write the variable - see also def_output
     IF (Q_ONLY) THEN
        WRITE_VAR=.FALSE.
-       IF (TRIM(VNAME(IVAR)).EQ.'ppt') WRITE_VAR=.TRUE.
-       IF (TRIM(VNAME(IVAR)).EQ.'pet') WRITE_VAR=.TRUE.
-       IF (TRIM(VNAME(IVAR)).EQ.'evap_1') WRITE_VAR=.TRUE.
-       IF (TRIM(VNAME(IVAR)).EQ.'evap_2') WRITE_VAR=.TRUE.
+       !IF (TRIM(VNAME(IVAR)).EQ.'ppt')      WRITE_VAR=.TRUE.
+       !IF (TRIM(VNAME(IVAR)).EQ.'pet')      WRITE_VAR=.TRUE.
+       !IF (TRIM(VNAME(IVAR)).EQ.'obsq')     WRITE_VAR=.TRUE.
+       IF (TRIM(VNAME(IVAR)).EQ.'evap_1')   WRITE_VAR=.TRUE.
+       IF (TRIM(VNAME(IVAR)).EQ.'evap_2')   WRITE_VAR=.TRUE.
        IF (TRIM(VNAME(IVAR)).EQ.'q_instnt') WRITE_VAR=.TRUE.
        !IF (TRIM(VNAME(IVAR)).EQ.'q_routed') WRITE_VAR=.TRUE.
        IF (TRIM(VNAME(IVAR)).EQ.'watr_1')   WRITE_VAR=.TRUE.
        IF (TRIM(VNAME(IVAR)).EQ.'watr_2')   WRITE_VAR=.TRUE.
-       IF (TRIM(VNAME(IVAR)).EQ.'swe_tot')   WRITE_VAR=.TRUE.
-       !IF (TRIM(VNAME(IVAR)).EQ.'qsurf') WRITE_VAR=.TRUE.
+       IF (TRIM(VNAME(IVAR)).EQ.'swe_tot')  WRITE_VAR=.TRUE.
+       !IF (TRIM(VNAME(IVAR)).EQ.'qsurf')   WRITE_VAR=.TRUE.
        !IF (TRIM(VNAME(IVAR)).EQ.'oflow_1') WRITE_VAR=.TRUE.
        !IF (TRIM(VNAME(IVAR)).EQ.'qintf_1') WRITE_VAR=.TRUE.
        !IF (TRIM(VNAME(IVAR)).EQ.'oflow_2') WRITE_VAR=.TRUE.
        !IF (TRIM(VNAME(IVAR)).EQ.'qbase_2') WRITE_VAR=.TRUE.
-       IF (.NOT.WRITE_VAR) CYCLE
+       IF (.NOT.WRITE_VAR) CYCLE ! start new iteration of do loop, i.e. skip writting variable
     ENDIF
 
-     ! write the variable
-     XVAR_3d = VAREXTRACT_3d(VNAME(IVAR),numtim)   ! get variable
-     AVAR_3d = XVAR_3d                             ! convert format
-
-     IERR = NF_INQ_VARID(ncid_out,TRIM(VNAME(IVAR)),IVAR_ID); CALL HANDLE_ERR(IERR) ! get variable ID
-
-     IERR = NF_PUT_VARA_REAL(ncid_out,IVAR_ID,IND_START,IND_COUNT,AVAR_3d); CALL HANDLE_ERR(IERR) ! write data
-
-     IF(ierr/=0)THEN; PRINT*, TRIM('Problem while writing data to output file'); STOP; ENDIF
+    ! write the variable
+    XVAR_3d = VAREXTRACT_3d(VNAME(IVAR),numtim)   ! get variable
+    AVAR_3d = XVAR_3d                             ! convert format
+    IERR = NF_INQ_VARID(ncid_out,TRIM(VNAME(IVAR)),IVAR_ID); CALL HANDLE_ERR(IERR) ! get variable ID
+    IERR = NF_PUT_VARA_REAL(ncid_out,IVAR_ID,IND_START,IND_COUNT,AVAR_3d); CALL HANDLE_ERR(IERR) ! write data
 
   END DO  ! (ivar)
 
   ! write the time
-  !tDat = timDat%dtime ! convert to actual single precision
-  !ierr = nf_inq_varid(ncid_out,'time',ivar_id); CALL handle_err(ierr)             ! get variable ID for time
-  !ierr = nf_put_var1_real(ncid_out,ivar_id,itim_sim,tDat); CALL handle_err(ierr) ! write time variable
+  allocate(tDat(numtim),time_steps_sub(numtim))
+
+  time_steps_sub = time_steps(istart_in:(istart_in+numtim-1)) ! extract time for subperiod
+  tDat = time_steps_sub ! convert to actual single precision
+  ierr = nf_inq_varid(ncid_out,'time',ivar_id); CALL handle_err(ierr)             ! get variable ID for time
+  ierr = nf_put_vara_real(ncid_out,ivar_id,istart_sim,numtim,tDat); CALL handle_err(ierr)  ! write time variable
+
+  deallocate(tDat,time_steps_sub)
+
   ! close NetCDF file
+  IERR = NF_CLOSE(ncid_out)
   IERR = NF_CLOSE(ncid_out)
 
 END SUBROUTINE PUT_GOUTPUT_3D

@@ -44,7 +44,7 @@ MODULE multiforce
   TYPE(tData)                           :: timDat     ! model time structure
   ! response data structures
   TYPE(vData)                           :: valDat     ! validation structure
-  TYPE(vData), DIMENSION(:), POINTER    :: aValid     ! all model validation data
+  TYPE(vData), DIMENSION(:,:,:), POINTER    :: aValid     ! all model validation data
   ! forcing data structures
   TYPE(FDATA), DIMENSION(:), POINTER    :: CFORCE     ! COPY of model forcing data
   TYPE(FDATA), DIMENSION(:), POINTER    :: AFORCE     ! all model forcing data
@@ -55,6 +55,9 @@ MODULE multiforce
   TYPE(aData), DIMENSION(:,:,:), POINTER  :: ancilF_3d  ! ancillary forcing data for the 3-d grid - because time is timeless
 
   ! timing information - note that numtim_in >= numtim_sim >= numtim_sub
+  CHARACTER(len=20)                     :: date_start_input          ! date start input time series
+  CHARACTER(len=20)                     :: date_end_input            ! date end input time series
+
   INTEGER(i4b)                          :: numtim_in=-1              ! number of time steps of input (atmospheric forcing)
   INTEGER(i4b)                          :: numtim_sim=-1             ! number of time steps of FUSE simulations (including spin-up)
   INTEGER(i4b)                          :: numtim_sub=-1             ! number of time steps of subperiod (will be kept in memory)
@@ -63,9 +66,11 @@ MODULE multiforce
   INTEGER(i4b)                          :: itim_sim=-1               ! indice within numtim_sim
   INTEGER(i4b)                          :: itim_sub=-1               ! indice within numtim_sub
 
-  INTEGER(i4b)                          :: warmup_beg=-1             ! index for the start of the warm-up period
-  INTEGER(i4b)                          :: infern_beg=-1             ! index for the start of the inference period
-  INTEGER(i4b)                          :: infern_end=-1             ! index for the end of the inference period
+  INTEGER(i4b)                          :: sim_beg=-1                ! index for the start of the simulation in fuse_rmse
+  INTEGER(i4b)                          :: sim_end=-1                ! index for the end of the simulation in fuse_rmse
+  INTEGER(i4b)                          :: eval_beg=-1               ! index for the start of evaluation period
+  INTEGER(i4b)                          :: eval_end=-1               ! index for the end of the inference period
+
   INTEGER(i4b)                          :: istart=-1                 ! index for start of inference period (in reduced array)
   REAL(sp)                              :: jdayRef                   ! reference time (days)
   REAL(sp)                              :: deltim=-1._dp             ! length of time step (days)
@@ -77,7 +82,10 @@ MODULE multiforce
   REAL(sp)                              :: ylat                      ! latitude (degrees) for PET computation
   REAL(sp),dimension(:),allocatable     :: latitude                  ! latitude (degrees)
   REAL(sp),dimension(:),allocatable     :: longitude                 ! longitude (degrees)
+  CHARACTER(len=strLen),dimension(:),allocatable   :: name_psets     ! name of parameter sets
+  INTEGER(I4B)                          :: NUMPSET                   ! number of parameter sets
   REAL(sp),dimension(:),allocatable     :: time_steps                ! time steps (days)
+  REAL(sp),dimension(:),allocatable     :: julian_time_steps         ! time steps (julian days)
   CHARACTER(len=strLen)                 :: latUnits                  ! units string for latitude
   CHARACTER(len=strLen)                 :: lonUnits                  ! units string for longitude
   CHARACTER(len=strLen)                 :: timeUnits                 ! units string for time
@@ -95,24 +103,26 @@ MODULE multiforce
   CHARACTER(len=StrLen)                 :: vname_dtime='undefined'   ! name of variable for time
 
   ! number of forcing variables
-  INTEGER(i4b),PARAMETER                :: nForce=6                 ! see lines below, does not include Q
+  INTEGER(i4b), PARAMETER               :: nForce=7                  ! see lines below
+  INTEGER(i4b)                          :: nInput=3                  ! number of variable to retrieve from input file
 
   ! forcing variable names
   CHARACTER(len=StrLen)                 :: vname_aprecip='undefined' ! variable name: precipitation
   CHARACTER(len=StrLen)                 :: vname_potevap='undefined' ! variable name: potential ET
   CHARACTER(len=StrLen)                 :: vname_airtemp='undefined' ! variable name: temperature
+  CHARACTER(len=StrLen)                 :: vname_q      ='undefined' ! variable name: observed runoff
   CHARACTER(len=StrLen)                 :: vname_spechum='undefined' ! variable name: specific humidity
   CHARACTER(len=StrLen)                 :: vname_airpres='undefined' ! variable name: surface pressure
   CHARACTER(len=StrLen)                 :: vname_swdown ='undefined' ! variable name: downward shortwave radiation
-  CHARACTER(len=StrLen)                 :: vname_q      ='undefined' ! variable name: runoff
 
   ! indices for forcing variables
   INTEGER(i4b),PARAMETER                :: ilook_aprecip=1  ! named element in lCheck
   INTEGER(i4b),PARAMETER                :: ilook_potevap=2  ! named element in lCheck
   INTEGER(i4b),PARAMETER                :: ilook_airtemp=3  ! named element in lCheck
-  INTEGER(i4b),PARAMETER                :: ilook_spechum=4  ! named element in lCheck
-  INTEGER(i4b),PARAMETER                :: ilook_airpres=5  ! named element in lCheck
-  INTEGER(i4b),PARAMETER                :: ilook_swdown =6  ! named element in lCheck
+  INTEGER(i4b),PARAMETER                :: ilook_q=4        ! named element in lCheck
+  INTEGER(i4b),PARAMETER                :: ilook_spechum=5  ! named element in lCheck
+  INTEGER(i4b),PARAMETER                :: ilook_airpres=6  ! named element in lCheck
+  INTEGER(i4b),PARAMETER                :: ilook_swdown =7  ! named element in lCheck
 
   ! NetCDF
   INTEGER(i4b)                          :: ncid_forc=-1              ! NetCDF forcing file ID
