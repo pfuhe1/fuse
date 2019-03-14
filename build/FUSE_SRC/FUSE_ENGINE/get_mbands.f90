@@ -150,7 +150,7 @@ USE fuse_fileManager,only:MBANDS_NC      							! defines elevation bands
 
 USE multibands,only:N_BANDS,MBANDS,MBANDS_INFO_3d,Z_FORCING,&
 										Z_FORCING_grid,elev_mask          ! model band structures
-USE multiforce,only:nspat1,nspat2                     ! dimension lengths
+USE multiforce,only:nspat1,nspat2,NA_VALUE_SP                     ! dimension lengths, na_value
 
 IMPLICIT NONE
 ! dummies
@@ -246,7 +246,7 @@ DO iSpat2=1,nSpat2
 	 MBANDS_INFO_3d(iSpat1,iSpat2,:)%Z_MID = me_TEMP(iSpat1,iSpat2,:)
 	 MBANDS_INFO_3d(iSpat1,iSpat2,:)%AF    = af_TEMP(iSpat1,iSpat2,:)
 	 Z_FORCING_grid(iSpat1,iSpat2)    = sum(me_TEMP(iSpat1,iSpat2,:)*af_TEMP(iSpat1,iSpat2,:)) ! estimate mean elevation of forcing using weighted mean of EB elevation
-	 elev_mask(iSpat1,iSpat2)=ISNAN(me_TEMP(iSpat1,iSpat2,1)) ! if mean elevation first band is NaN, mask this grid cell
+	 elev_mask(iSpat1,iSpat2) = me_TEMP(iSpat1,iSpat2,1) .EQ. NA_VALUE_SP ! if mean elevation first band is NA_VALUE, mask this grid cell
 
 	 if(.NOT.elev_mask(iSpat1,iSpat2)) THEN ! only check area fraction sum to 1 is not NaN
 
