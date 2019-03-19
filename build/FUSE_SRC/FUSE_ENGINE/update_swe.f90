@@ -36,7 +36,7 @@ REAL(SP)                               :: PRECIP_Z       ! band precipitation at
 REAL(SP)                               :: MF             ! melt factor (mm/deg.C-6hr)
 INTEGER(I4B)                           :: ISNW           ! loop through snow model bands
 ! Snow redistribution variables (TODO some of these should be parameters?)
-REAL(SP)                               :: Z_REDIST_UP = 5500._sp   ! snow is redistributed from levels above this hight
+!REAL(SP)                               :: Z_REDIST_UP = 5500._sp   ! snow is redistributed from levels above this hight
 REAL(SP)                               :: Z_REDIST_LOW = 1900._sp  ! snow is not redistributed below this height
 REAL(SP)                               :: SWE_MAX = 500._sp
 REAL(SP)                               :: SWE_REDIST_BULK ! SWE redistributed (bulk over whole cell) 
@@ -135,7 +135,8 @@ DO ISNW=1,N_BANDS
 END DO
 
 ! Calculate amount of snow to redistribute and remove from each band
-REDIST_TARGET = (MBANDS%Z_MID .GT. Z_REDIST_UP .AND. MBANDS%SWE .GT. SWE_MAX) *-1
+! REDIST_TARGET = (MBANDS%Z_MID .GT. Z_REDIST_UP .AND. MBANDS%SWE .GT. SWE_MAX) *-1 first version
+REDIST_TARGET = (MBANDS%SWE .GT. SWE_MAX) *-1 ! Transfer from all bands with SWE > SWE_MAX
 !print*,'DEBUG, redist_target: removal',REDIST_TARGET
 IF (SUM(REDIST_TARGET).GT.0) THEN
  SWE_TOT0 = SUM(MBANDS%SWE * MBANDS%AF)
@@ -148,13 +149,15 @@ END WHERE
 SWE_REDIST_BULK = SUM(REDIST_AMOUNTS)
 
 ! Transfer redistributed snow to lower levels
-REDIST_TARGET = (MBANDS%Z_MID .GT. Z_REDIST_LOW .AND. MBANDS%Z_MID .LT. Z_REDIST_UP) *-1
+!REDIST_TARGET = (MBANDS%Z_MID .GT. Z_REDIST_LOW .AND. MBANDS%Z_MID .LT. Z_REDIST_UP) *-1 ! First version
+! Redist to bands above Z_REDIST_LOW with SWE<SWE_MAX 
+REDIST_TARGET = (MBANDS%Z_MID .GT. Z_REDIST_LOW .AND. REDIST_TARGET .EQ. 0) *-1 
 !print*,'DEBUG, redist_target: deposit',REDIST_TARGET
 IF (SWE_REDIST_BULK > 0._sp) THEN
  IF (SUM(REDIST_TARGET).EQ.0) THEN
   ! All levels are above Z_REDIST_LOW: put snow into bottom level
-  print *,'WARNING, All bands are above Z_REDIST_UP, distributing snow to bottom band',MBANDS(1)%Z_MID,SWE_REDIST_BULK
-  REDIST_TARGET(1)=1
+  print *,'WARNING, All bands have SWE > SWE_MAX! Distributing snow evenly across bands above Z_REDIST_LOW',MBANDS(1)%Z_MID,SWE_REDIST_BULK
+  REDIST_TARGET = (MBANDS%Z_MID .GT. Z_REDIST_LOW) *-1 
  END IF
  ! For each band increase SWE by same height, reduce by fraction of cell
  SWE_REDIST = SWE_REDIST_BULK / SUM(REDIST_TARGET*MBANDS%AF) 
