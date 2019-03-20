@@ -69,6 +69,7 @@ LIST_Q_TDH(2)%MCOMPONENT = 'no_routing' ! no routing
 ! snow model switch
 LIST_SNOWM(1)%MCOMPONENT = 'no_snowmod' ! no snow model
 LIST_SNOWM(2)%MCOMPONENT = 'temp_index' ! temperature index snow model
+LIST_SNOWM(2)%MCOMPONENT = 'ti_redistr' ! temperature index snow model with snow redistribution
 ! ---------------------------------------------------------------------------------------
 ! (2) LOOP THROUGH MODEL COMPONENTS AND DEFINE A SET OF UNIQUE MODELS
 ! ---------------------------------------------------------------------------------------
@@ -117,7 +118,7 @@ DO ISW_Q_TDH=1,SIZE(LIST_Q_TDH)
          AMODL(ICOUNT)%iESOIL = desc_str2int(LIST_ESOIL(ISW_ESOIL)%MCOMPONENT)
          AMODL(ICOUNT)%iQINTF = desc_str2int(LIST_QINTF(ISW_QINTF)%MCOMPONENT)
          AMODL(ICOUNT)%iQ_TDH = desc_str2int(LIST_Q_TDH(ISW_Q_TDH)%MCOMPONENT)
-         AMODL(ICOUNT)%iSNOWM = desc_str2int(LIST_Q_TDH(ISW_SNOWM)%MCOMPONENT)
+         AMODL(ICOUNT)%iSNOWM = desc_str2int(LIST_SNOWM(ISW_SNOWM)%MCOMPONENT)
          !write(*,'(i3,1x,7(a10,1x))') icount, amodl(icount)
         ELSE
          ! need to allocate more space

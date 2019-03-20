@@ -22,7 +22,7 @@ MODULE model_defn
  TYPE(DESC), DIMENSION(2)              :: LIST_ESOIL      ! evaporation
  TYPE(DESC), DIMENSION(2)              :: LIST_QINTF      ! interflow
  TYPE(DESC), DIMENSION(2)              :: LIST_Q_TDH      ! time delay in runoff
- TYPE(DESC), DIMENSION(2)              :: LIST_SNOWM      ! snow model
+ TYPE(DESC), DIMENSION(3)              :: LIST_SNOWM      ! snow model
  ! structure that holds (x) unique combinations
  TYPE UMODEL
   INTEGER(I4B)                         :: MODIX           ! model index
