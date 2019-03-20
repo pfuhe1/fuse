@@ -44,8 +44,6 @@ REAL(SP)                               :: SWE_REDIST_PERBAND ! SWE redistributed
 REAL(SP)                               :: SWE_TOT0  ! Diagnostic: total swe before redistribution
 REAL(SP)                               :: SWE_TOT1  ! Diagnostic: total swe after redistribution
 
-! Initialise redist amounts
-MBANDS%SWE_REDIST = 0._sp
 
 ! ---------------------------------------------------------------------------------------
 ! snow accumulation and melt calculations for each band
@@ -133,6 +131,12 @@ END DO
 ! ---------------------------------------------------------------------------------------
 
 IF (SMODL%iSNOWM.EQ.iopt_ti_redistr) THEN
+
+ ! Initialise redist amounts
+ DO ISNW=1,N_BANDS
+  MBANDS(ISNW)%SWE_REDIST = 0._sp
+ END DO
+
  ! Determine which bands to transfer snow from:
  ! First version
  ! MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_UP .AND. MBANDS%SWE .GT. SWE_MAX) *-1 
@@ -153,7 +157,6 @@ IF (SMODL%iSNOWM.EQ.iopt_ti_redistr) THEN
   SWE_REDIST_BULK = 0._sp
  END IF
 
-
  ! Transfer redistributed snow to lower levels
  IF (SWE_REDIST_BULK > 0._sp) THEN
 
@@ -165,7 +168,7 @@ IF (SMODL%iSNOWM.EQ.iopt_ti_redistr) THEN
   !print*,'DEBUG, MBANDS%REDIST_BANDS: deposit',MBANDS%REDIST_BANDS
   IF (SUM(MBANDS%REDIST_BANDS).EQ.0) THEN
    ! All levels are above Z_REDIST_LOW: put snow evenly across bands above Z_REDIST_LOW
-   print *,'WARNING, All bands have SWE > SWE_MAX! Distributing snow evenly across bands above Z_REDIST_LOW',MBANDS(1)%Z_MID,SWE_REDIST_BULK
+   print *,'WARNING, All bands have SWE > SWE_MAX! Distributing snow evenly across bands above Z_REDIST_LOW',SWE_REDIST_BULK
    MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_LOW) *-1 
   END IF !SUM(MBANDS%REDIST_BANDS).EQ.0
 
