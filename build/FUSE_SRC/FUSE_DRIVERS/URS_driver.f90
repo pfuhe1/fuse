@@ -135,7 +135,7 @@ IF (ERR.NE.0) WRITE(*,*) TRIM(MESSAGE); IF (ERR.GT.0) STOP
 ! Define list of states and parameters for the current model
 ! Read data from the "BATEA-compliant" ASCII files
 CALL GETFORCING(INFERN_START,NTIM) ! read forcing data
-IF (SMODL%iSNOWM.EQ.iopt_temp_index) CALL GET_MBANDS(err,message) ! read band data if snow model 
+IF (SMODL%iSNOWM.EQ.iopt_temp_index .OR. SMODL%iSNOWM.EQ.iopt_ti_redistr) CALL GET_MBANDS(err,message) ! read band data if snow model 
 CALL ASSIGN_STT()        ! state definitions are stored in module model_defn
 CALL ASSIGN_FLX()        ! flux definitions are stored in module model_defn
 CALL ASSIGN_PAR()        ! parameter definitions are stored in module multiparam

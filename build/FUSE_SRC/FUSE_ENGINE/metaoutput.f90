@@ -43,7 +43,7 @@ I=I+1; VNAME(I)='free_2a    '; LNAME(I)='free storage in the primary baseflow re
 I=I+1; VNAME(I)='free_2b    '; LNAME(I)='free storage in the secondary baseflow reservoir   '; VUNIT(I)='mm           '
 I=I+1; VNAME(I)='watr_2     '; LNAME(I)='total storage in the lower layer                   '; VUNIT(I)='mm           '
 
-IF(SMODL%iSNOWM.EQ.iopt_temp_index) THEN !loop through snow model bands
+IF(SMODL%iSNOWM.EQ.iopt_temp_index .OR. SMODL%iSNOWM.EQ.iopt_ti_redistr) THEN !loop through snow model bands
 
  print *, 'Creating variables for the snow model for ', N_BANDS ,'elevation bands'
 

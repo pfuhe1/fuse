@@ -40,7 +40,7 @@ M_FLUX%OFLOW_1     = 0._sp; W_FLUX%OFLOW_1     = 0._sp
 M_FLUX%OFLOW_2     = 0._sp; W_FLUX%OFLOW_2     = 0._sp
 M_FLUX%OFLOW_2A    = 0._sp; W_FLUX%OFLOW_2A    = 0._sp
 M_FLUX%OFLOW_2B    = 0._sp; W_FLUX%OFLOW_2B    = 0._sp
-IF(SMODL%iSNOWM.EQ.iopt_temp_index) THEN !loop through snow model bands
+IF(SMODL%iSNOWM.EQ.iopt_temp_index .OR. SMODL%iSNOWM.EQ.iopt_ti_redistr) THEN !loop through snow model bands
  DO ISNW=1,N_BANDS
   MBANDS(ISNW)%SNOWACCMLTN  = 0._sp 
   MBANDS(ISNW)%SNOWMELT     = 0._sp 

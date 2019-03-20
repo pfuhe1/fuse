@@ -27,7 +27,8 @@ integer(I4B), parameter ::  iopt_additive_e = 1001, &
                             iopt_rout_gamma = 8001, &
                             iopt_no_routing = 8002, &
                             iopt_no_snowmod = 8501, &
-                            iopt_temp_index = 8502
+                            iopt_temp_index = 8502, &
+                            iopt_ti_redistr = 8503
 ! ---
 integer(I4B), parameter ::  iopt_TENS1A = 9001, &
                             iopt_TENS1B = 9002, &
@@ -72,6 +73,7 @@ case("rout_gamma"); res = iopt_rout_gamma
 case("no_routing"); res = iopt_no_routing
 case("no_snowmod"); res = iopt_no_snowmod
 case("temp_index"); res = iopt_temp_index
+case("ti_redistr"); res = iopt_ti_redistr
 case("TENS1B");  res = iopt_TENS1B
 case("TENS_1");  res = iopt_TENS_1
 case("FREE_1");  res = iopt_FREE_1
@@ -124,6 +126,7 @@ case(iopt_rout_gamma); res = "rout_gamma"
 case(iopt_no_routing); res = "no_routing"
 case(iopt_no_snowmod); res = "no_snowmod"
 case(iopt_temp_index); res = "temp_index"
+case(iopt_ti_redistr); res = "ti_redistr"
 case default;      res = "UNDFND"
 endselect
 ! End procedure here

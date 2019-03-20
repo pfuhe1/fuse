@@ -72,7 +72,7 @@ I=I+1; PNAME(I)='QBSAT      '; PDESC(I)='baseflow at saturation (derived paramet
 I=I+1; PNAME(I)='POWLAMB    '; PDESC(I)='mean value of power-transformed topographic index  '; PUNIT(I)='m**(1/n)'
 I=I+1; PNAME(I)='MAXPOW     '; PDESC(I)='max value of power-transformed topographic index   '; PUNIT(I)='m**(1/n)'
 ! model bands parameters
-IF(SMODL%iSNOWM.EQ.iopt_temp_index) THEN !loop through snow model bands
+IF(SMODL%iSNOWM.EQ.iopt_temp_index .OR. SMODL%iSNOWM.EQ.iopt_ti_redistr) THEN !loop through snow model bands
  I=I+1; PNAME(I)='N_BANDS    '; PDESC(I)='number of basin bands in model                     '; PUNIT(I)='=       '
  I=I+1; PNAME(I)='Z_FORCING  '; PDESC(I)='elevation of model forcing data                    '; PUNIT(I)='m       '
  DO IBAND=1,N_BANDS

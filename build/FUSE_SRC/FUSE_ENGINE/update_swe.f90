@@ -132,53 +132,55 @@ END DO
 ! snow redistribution
 ! ---------------------------------------------------------------------------------------
 
-! Determine which bands to transfer snow from:
-! First version
-! MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_UP .AND. MBANDS%SWE .GT. SWE_MAX) *-1 
-! Transfer from all bands with SWE > SWE_MAX
-MBANDS%REDIST_BANDS = (MBANDS%SWE .GT. SWE_MAX) *-1 
-!print*,'DEBUG, MBANDS%REDIST_BANDS: removal',MBANDS%REDIST_BANDS
+IF (SMODL%iSNOWM.EQ.iopt_ti_redistr) THEN
+ ! Determine which bands to transfer snow from:
+ ! First version
+ ! MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_UP .AND. MBANDS%SWE .GT. SWE_MAX) *-1 
+ ! Transfer from all bands with SWE > SWE_MAX
+ MBANDS%REDIST_BANDS = (MBANDS%SWE .GT. SWE_MAX) *-1 
+ !print*,'DEBUG, MBANDS%REDIST_BANDS: removal',MBANDS%REDIST_BANDS
 
-! Calculate amount of snow to redistribute and remove from each band
-IF (SUM(MBANDS%REDIST_BANDS).GT.0) THEN
- SWE_TOT0 = SUM(MBANDS%SWE * MBANDS%AF)
- WHERE(MBANDS%REDIST_BANDS.EQ.1)
-  MBANDS%SWE_REDIST = (MBANDS%SWE - SWE_MAX) * MBANDS%AF
-  MBANDS%SWE = SWE_MAX
- END WHERE
- ! SWE mass to redistribute
- SWE_REDIST_BULK = SUM(MBANDS%SWE_REDIST)
-ELSE
- SWE_REDIST_BULK = 0._sp
-END IF
-
-
-! Transfer redistributed snow to lower levels
-IF (SWE_REDIST_BULK > 0._sp) THEN
-
-! Determine which bands to transfer snow to:
-! First version
-!MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_LOW .AND. MBANDS%Z_MID .LT. Z_REDIST_UP) *-1 ! 
-! Redist to bands above Z_REDIST_LOW with SWE<SWE_MAX 
-MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_LOW .AND. MBANDS%REDIST_BANDS .EQ. 0) *-1 
-!print*,'DEBUG, MBANDS%REDIST_BANDS: deposit',MBANDS%REDIST_BANDS
- IF (SUM(MBANDS%REDIST_BANDS).EQ.0) THEN
-  ! All levels are above Z_REDIST_LOW: put snow evenly across bands above Z_REDIST_LOW
-  print *,'WARNING, All bands have SWE > SWE_MAX! Distributing snow evenly across bands above Z_REDIST_LOW',MBANDS(1)%Z_MID,SWE_REDIST_BULK
-  MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_LOW) *-1 
+ ! Calculate amount of snow to redistribute and remove from each band
+ IF (SUM(MBANDS%REDIST_BANDS).GT.0) THEN
+  SWE_TOT0 = SUM(MBANDS%SWE * MBANDS%AF)
+  WHERE(MBANDS%REDIST_BANDS.EQ.1)
+   MBANDS%SWE_REDIST = (MBANDS%SWE - SWE_MAX) * MBANDS%AF
+   MBANDS%SWE = SWE_MAX
+  END WHERE
+  ! SWE mass to redistribute
+  SWE_REDIST_BULK = SUM(MBANDS%SWE_REDIST)
+ ELSE
+  SWE_REDIST_BULK = 0._sp
  END IF
 
- ! Calculate SWE to add per band (increase SWE by same height for each band)
- SWE_REDIST_PERBAND = SWE_REDIST_BULK / SUM(MBANDS%REDIST_BANDS*MBANDS%AF) 
- 
- ! Distribute SWE to new bands
- WHERE(MBANDS%REDIST_BANDS.EQ.1) MBANDS%SWE = MBANDS%SWE + SWE_REDIST_PERBAND
- 
- ! DEBUG statements, check SWE conservation
- !print *,'DEBUG: tot_swe bfore/after redist',SWE_TOT0,SUM(MBANDS%SWE * MBANDS%AF),SWE_REDIST_BULK
- SWE_TOT1 = SUM(MBANDS%SWE * MBANDS%AF)
- IF( SWE_TOT1-SWE_TOT0 .GT. 1E-6) print*,'WARNING snow redistribution not conserving: swe before/after,distributed',SWE_TOT0,SWE_TOT1,SWE_REDIST_BULK
 
-END IF ! SWE_REDIST_BULK > 0._sp
+ ! Transfer redistributed snow to lower levels
+ IF (SWE_REDIST_BULK > 0._sp) THEN
+
+  ! Determine which bands to transfer snow to:
+  ! First version
+  !MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_LOW .AND. MBANDS%Z_MID .LT. Z_REDIST_UP) *-1 ! 
+  ! Redist to bands above Z_REDIST_LOW with SWE<SWE_MAX 
+  MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_LOW .AND. MBANDS%REDIST_BANDS .EQ. 0) *-1 
+  !print*,'DEBUG, MBANDS%REDIST_BANDS: deposit',MBANDS%REDIST_BANDS
+  IF (SUM(MBANDS%REDIST_BANDS).EQ.0) THEN
+   ! All levels are above Z_REDIST_LOW: put snow evenly across bands above Z_REDIST_LOW
+   print *,'WARNING, All bands have SWE > SWE_MAX! Distributing snow evenly across bands above Z_REDIST_LOW',MBANDS(1)%Z_MID,SWE_REDIST_BULK
+   MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_LOW) *-1 
+  END IF !SUM(MBANDS%REDIST_BANDS).EQ.0
+
+  ! Calculate SWE to add per band (increase SWE by same height for each band)
+  SWE_REDIST_PERBAND = SWE_REDIST_BULK / SUM(MBANDS%REDIST_BANDS*MBANDS%AF) 
+ 
+  ! Distribute SWE to new bands
+  WHERE(MBANDS%REDIST_BANDS.EQ.1) MBANDS%SWE = MBANDS%SWE + SWE_REDIST_PERBAND
+ 
+  ! DEBUG statements, check SWE conservation
+  !print *,'DEBUG: tot_swe bfore/after redist',SWE_TOT0,SUM(MBANDS%SWE * MBANDS%AF),SWE_REDIST_BULK
+  SWE_TOT1 = SUM(MBANDS%SWE * MBANDS%AF)
+  IF( SWE_TOT1-SWE_TOT0 .GT. 1E-6) print*,'WARNING snow redistribution not conserving: swe before/after,distributed',SWE_TOT0,SWE_TOT1,SWE_REDIST_BULK
+
+ END IF ! SWE_REDIST_BULK > 0._sp
+END IF ! SMODL%iSNOWM.EQ.iopt_ti_redistr
 
 END SUBROUTINE UPDATE_SWE

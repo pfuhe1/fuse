@@ -86,7 +86,7 @@ contains
     M_FLUX%OFLOW_2     = VAL; W_FLUX%OFLOW_2     = VAL
     M_FLUX%OFLOW_2A    = VAL; W_FLUX%OFLOW_2A    = VAL
     M_FLUX%OFLOW_2B    = VAL; W_FLUX%OFLOW_2B    = VAL
-    IF(SMODL%iSNOWM.EQ.iopt_temp_index) THEN !loop through snow model bands
+    IF(SMODL%iSNOWM.EQ.iopt_temp_index .OR. SMODL%iSNOWM.EQ.iopt_ti_redistr) THEN !loop through snow model bands
      DO ISNW=1,N_BANDS
       MBANDS(ISNW)%SNOWACCMLTN  = VAL
       MBANDS(ISNW)%SNOWMELT     = VAL

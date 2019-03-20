@@ -180,7 +180,7 @@ END SELECT
 ! (9) SNOW MODEL 
 ! ---------------------------------------------------------------------------------------
 SELECT CASE(SMODL%iSNOWM)
- CASE(iopt_temp_index) ! temperature index snow model
+ CASE(iopt_temp_index,iopt_ti_redistr) ! temperature index snow model
   MPAR = MPAR + 1; LPARAM(MPAR)%PARNAME = 'MBASE    ' ! snow base melting temperature
   MPAR = MPAR + 1; LPARAM(MPAR)%PARNAME = 'MFMAX    ' ! snow maximum melt factor
   MPAR = MPAR + 1; LPARAM(MPAR)%PARNAME = 'MFMIN    ' ! snow minimum melt factor
@@ -189,7 +189,7 @@ SELECT CASE(SMODL%iSNOWM)
   MPAR = MPAR + 1; LPARAM(MPAR)%PARNAME = 'LAPSE    ' ! temperature gradient
  CASE(iopt_no_snowmod) ! if no snow model, no additional parameters
  CASE DEFAULT
-  print *, "SMODL%SNOWM must be either 'temp_index' or 'no_snowmod'"
+  print *, "SMODL%SNOWM must be either 'temp_index','ti_redistr' or 'no_snowmod'"
   STOP
 END SELECT
 ! ---------------------------------------------------------------------------------------

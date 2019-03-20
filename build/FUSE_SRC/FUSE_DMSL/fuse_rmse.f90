@@ -131,7 +131,7 @@ MODULE FUSE_RMSE_MODULE  ! have as a module because of dynamic arrays
 
     PRINT *, 'N_BANDS =', N_BANDS
 
-    IF (SMODL%iSNOWM.EQ.iopt_temp_index) THEN
+    IF (SMODL%iSNOWM.EQ.iopt_temp_index .OR. SMODL%iSNOWM.EQ.iopt_ti_redistr) THEN
       DO iSpat2=1,nSpat2
         DO iSpat1=1,nSpat1
          DO IBANDS=1,N_BANDS
@@ -213,7 +213,7 @@ MODULE FUSE_RMSE_MODULE  ! have as a module because of dynamic arrays
                ! if snow model, call UPDATE_SWE first to calculate snow fluxes and update snow bands
                ! using explicit Euler approach; if not, call QRAINERROR
                SELECT CASE(SMODL%iSNOWM)
-               CASE(iopt_temp_index)
+               CASE(iopt_temp_index,iopt_ti_redistr)
 
                   ! load data from multidimensional arrays
                   Z_FORCING          = Z_FORCING_grid(iSpat1,iSpat2)                       ! elevation of forcing data (m)
@@ -229,7 +229,7 @@ MODULE FUSE_RMSE_MODULE  ! have as a module because of dynamic arrays
                CASE(iopt_no_snowmod)
                   CALL QRAINERROR()
                CASE DEFAULT
-                  message="f-fuse_rmse/SMODL%iSNOWM must be either iopt_temp_index or iopt_no_snowmod"
+                  message="f-fuse_rmse/SMODL%iSNOWM must be either iopt_temp_index,iopt_ti_redistr or iopt_no_snowmod"
                   RETURN
                END SELECT
 
@@ -250,7 +250,7 @@ MODULE FUSE_RMSE_MODULE  ! have as a module because of dynamic arrays
               W_FLUX_3d(iSpat1,iSpat2,itim_sub) = W_FLUX
               AROUTE_3d(iSpat1,iSpat2,itim_sub) = MROUTE      ! save instantaneous and routed runoff
 
-              IF (SMODL%iSNOWM.EQ.iopt_temp_index) THEN
+              IF (SMODL%iSNOWM.EQ.iopt_temp_index .OR. SMODL%iSNOWM.EQ.iopt_ti_redistr) THEN
 
                  gState_3d(iSpat1,iSpat2,itim_sub+1)%SWE_TOT = SUM(MBANDS%SWE*MBANDS_INFO_3d(iSpat1,iSpat2,:)%AF) ! weighted average of SWE over all the elevation bands
                 W_FLUX_3d(iSpat1,iSpat2,itim_sub)%SNWMELT = SUM(MBANDS%SNOWMELT*MBANDS_INFO_3d(iSpat1,iSpat2,:)%AF) ! weighted average of SNOWMELT over all the elevation bands
