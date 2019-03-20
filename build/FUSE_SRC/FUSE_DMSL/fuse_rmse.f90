@@ -253,7 +253,7 @@ MODULE FUSE_RMSE_MODULE  ! have as a module because of dynamic arrays
               IF (SMODL%iSNOWM.EQ.iopt_temp_index) THEN
 
                  gState_3d(iSpat1,iSpat2,itim_sub+1)%SWE_TOT = SUM(MBANDS%SWE*MBANDS_INFO_3d(iSpat1,iSpat2,:)%AF) ! weighted average of SWE over all the elevation bands
-                W_FLUX_3d(iSpat1,iSpat2,itim_sub+1)%SNWMELT = SUM(MBANDS%SNOWMELT*MBANDS_INFO_3d(iSpat1,iSpat2,:)%AF) ! weighted average of SNOWMELT over all the elevation bands
+                W_FLUX_3d(iSpat1,iSpat2,itim_sub)%SNWMELT = SUM(MBANDS%SNOWMELT*MBANDS_INFO_3d(iSpat1,iSpat2,:)%AF) ! weighted average of SNOWMELT over all the elevation bands
 
                  MBANDS_VAR_4d(iSpat1,iSpat2,:,itim_sub+1)%SWE         = MBANDS%SWE          ! update MBANDS_VAR_4D
                  MBANDS_VAR_4d(iSpat1,iSpat2,:,itim_sub+1)%SNOWACCMLTN = MBANDS%SNOWACCMLTN  !
