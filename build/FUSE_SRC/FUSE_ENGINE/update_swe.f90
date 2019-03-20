@@ -39,19 +39,13 @@ INTEGER(I4B)                           :: ISNW           ! loop through snow mod
 !REAL(SP)                               :: Z_REDIST_UP = 5500._sp   ! snow is redistributed from levels above this hight
 REAL(SP)                               :: Z_REDIST_LOW = 1900._sp  ! snow is not redistributed below this height
 REAL(SP)                               :: SWE_MAX = 500._sp
-REAL(SP)                               :: SWE_REDIST_BULK ! SWE redistributed (bulk over whole cell) 
-REAL(SP)                               :: SWE_REDIST      ! SWE redistributed (over fraction)
+REAL(SP)                               :: SWE_REDIST_BULK  ! SWE redistributed (bulk over whole cell) 
+REAL(SP)                               :: SWE_REDIST_PERBAND ! SWE redistributed (per band)
 REAL(SP)                               :: SWE_TOT0  ! Diagnostic: total swe before redistribution
 REAL(SP)                               :: SWE_TOT1  ! Diagnostic: total swe after redistribution
-INTEGER(I4B),DIMENSION(:),ALLOCATABLE  :: REDIST_TARGET  ! 'logical' value used for determining bands to redistribute from/to
-REAL(SP),DIMENSION(:),ALLOCATABLE      :: REDIST_AMOUNTS ! SWE removed from each band in redistribution
-INTEGER(I4B)                           :: IERR        ! error code
 
-! allocate data stuctures (TODO) maybe allocate in get_mbands to speed up?
-ALLOCATE(REDIST_TARGET(N_BANDS),STAT=IERR)
-ALLOCATE(REDIST_AMOUNTS(N_BANDS),STAT=IERR)
 ! Initialise redist amounts
-REDIST_AMOUNTS = 0._sp
+MBANDS%SWE_REDIST = 0._sp
 
 ! ---------------------------------------------------------------------------------------
 ! snow accumulation and melt calculations for each band
@@ -134,49 +128,57 @@ DO ISNW=1,N_BANDS
  ENDIF
 END DO
 
+! ---------------------------------------------------------------------------------------
+! snow redistribution
+! ---------------------------------------------------------------------------------------
+
+! Determine which bands to transfer snow from:
+! First version
+! MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_UP .AND. MBANDS%SWE .GT. SWE_MAX) *-1 
+! Transfer from all bands with SWE > SWE_MAX
+MBANDS%REDIST_BANDS = (MBANDS%SWE .GT. SWE_MAX) *-1 
+!print*,'DEBUG, MBANDS%REDIST_BANDS: removal',MBANDS%REDIST_BANDS
+
 ! Calculate amount of snow to redistribute and remove from each band
-! REDIST_TARGET = (MBANDS%Z_MID .GT. Z_REDIST_UP .AND. MBANDS%SWE .GT. SWE_MAX) *-1 first version
-REDIST_TARGET = (MBANDS%SWE .GT. SWE_MAX) *-1 ! Transfer from all bands with SWE > SWE_MAX
-!print*,'DEBUG, redist_target: removal',REDIST_TARGET
-IF (SUM(REDIST_TARGET).GT.0) THEN
+IF (SUM(MBANDS%REDIST_BANDS).GT.0) THEN
  SWE_TOT0 = SUM(MBANDS%SWE * MBANDS%AF)
-ENDIF
-WHERE(REDIST_TARGET.EQ.1)
- REDIST_AMOUNTS = (MBANDS%SWE - SWE_MAX) * MBANDS%AF
- MBANDS%SWE = SWE_MAX
-END WHERE
-! SWE mass to redistribute
-SWE_REDIST_BULK = SUM(REDIST_AMOUNTS)
+ WHERE(MBANDS%REDIST_BANDS.EQ.1)
+  MBANDS%SWE_REDIST = (MBANDS%SWE - SWE_MAX) * MBANDS%AF
+  MBANDS%SWE = SWE_MAX
+ END WHERE
+ ! SWE mass to redistribute
+ SWE_REDIST_BULK = SUM(MBANDS%SWE_REDIST)
+ELSE
+ SWE_REDIST_BULK = 0._sp
+END IF
+
 
 ! Transfer redistributed snow to lower levels
-!REDIST_TARGET = (MBANDS%Z_MID .GT. Z_REDIST_LOW .AND. MBANDS%Z_MID .LT. Z_REDIST_UP) *-1 ! First version
-! Redist to bands above Z_REDIST_LOW with SWE<SWE_MAX 
-REDIST_TARGET = (MBANDS%Z_MID .GT. Z_REDIST_LOW .AND. REDIST_TARGET .EQ. 0) *-1 
-!print*,'DEBUG, redist_target: deposit',REDIST_TARGET
 IF (SWE_REDIST_BULK > 0._sp) THEN
- IF (SUM(REDIST_TARGET).EQ.0) THEN
-  ! All levels are above Z_REDIST_LOW: put snow into bottom level
+
+! Determine which bands to transfer snow to:
+! First version
+!MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_LOW .AND. MBANDS%Z_MID .LT. Z_REDIST_UP) *-1 ! 
+! Redist to bands above Z_REDIST_LOW with SWE<SWE_MAX 
+MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_LOW .AND. MBANDS%REDIST_BANDS .EQ. 0) *-1 
+!print*,'DEBUG, MBANDS%REDIST_BANDS: deposit',MBANDS%REDIST_BANDS
+ IF (SUM(MBANDS%REDIST_BANDS).EQ.0) THEN
+  ! All levels are above Z_REDIST_LOW: put snow evenly across bands above Z_REDIST_LOW
   print *,'WARNING, All bands have SWE > SWE_MAX! Distributing snow evenly across bands above Z_REDIST_LOW',MBANDS(1)%Z_MID,SWE_REDIST_BULK
-  REDIST_TARGET = (MBANDS%Z_MID .GT. Z_REDIST_LOW) *-1 
+  MBANDS%REDIST_BANDS = (MBANDS%Z_MID .GT. Z_REDIST_LOW) *-1 
  END IF
- ! For each band increase SWE by same height, reduce by fraction of cell
- SWE_REDIST = SWE_REDIST_BULK / SUM(REDIST_TARGET*MBANDS%AF) 
- ! Add 
- WHERE(REDIST_TARGET.EQ.1) MBANDS%SWE = MBANDS%SWE + SWE_REDIST
+
+ ! Calculate SWE to add per band (increase SWE by same height for each band)
+ SWE_REDIST_PERBAND = SWE_REDIST_BULK / SUM(MBANDS%REDIST_BANDS*MBANDS%AF) 
+ 
+ ! Distribute SWE to new bands
+ WHERE(MBANDS%REDIST_BANDS.EQ.1) MBANDS%SWE = MBANDS%SWE + SWE_REDIST_PERBAND
+ 
+ ! DEBUG statements, check SWE conservation
  !print *,'DEBUG: tot_swe bfore/after redist',SWE_TOT0,SUM(MBANDS%SWE * MBANDS%AF),SWE_REDIST_BULK
  SWE_TOT1 = SUM(MBANDS%SWE * MBANDS%AF)
  IF( SWE_TOT1-SWE_TOT0 .GT. 1E-6) print*,'WARNING snow redistribution not conserving: swe before/after,distributed',SWE_TOT0,SWE_TOT1,SWE_REDIST_BULK
 
-END IF ! SWE_REDIST_BULK
-
-! DEALLOCATE vars
-DEALLOCATE(REDIST_TARGET, STAT=IERR)
-IF (IERR.NE.0) THEN
- print *,'ERROR! update_swe/problem deallocating REDIST_TARGET'
-END IF
-DEALLOCATE(REDIST_AMOUNTS, STAT=IERR)
-IF (IERR.NE.0) THEN
- print *,'ERROR! update_swe/problem deallocating REDIST_AMOUNTS'
-END IF
+END IF ! SWE_REDIST_BULK > 0._sp
 
 END SUBROUTINE UPDATE_SWE

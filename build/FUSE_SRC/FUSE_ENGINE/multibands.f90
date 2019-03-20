@@ -10,6 +10,8 @@ MODULE multibands
   REAL(SP)                             :: SNOWACCMLTN     ! new snow accumulation in band (mm day-1)
   REAL(SP)                             :: SNOWMELT        ! snowmelt in band (mm day-1)
   REAL(SP)                             :: DSWE_DT         ! rate of change of band SWE (mm day-1)
+  REAL(SP)                             :: SWE_REDIST      ! Amount of swe to redistribute per band
+  INTEGER(I4B)                         :: REDIST_BANDS    ! 'logical' value used for determining bands to redistribute snow from/to
  ENDTYPE BANDS
 
  ! for distributed modeling MBANDS is split between time-independent and time-dependent charactertistics
