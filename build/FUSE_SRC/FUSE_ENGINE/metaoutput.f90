@@ -48,6 +48,7 @@ IF(SMODL%iSNOWM.EQ.iopt_temp_index) THEN !loop through snow model bands
  print *, 'Creating variables for the snow model for ', N_BANDS ,'elevation bands'
 
  I=I+1; VNAME(I)='swe_tot    '; LNAME(I)='total storage as snow                              '; VUNIT(I)='mm           '
+ I=I+1; VNAME(I)='snwmelt    '; LNAME(I)='total snowpack melt, in water equivalent           '; VUNIT(I)='mm timestep-1'
 
  DO ISNW=1,N_BANDS ! output each for each snow model band
   WRITE(TXT_ISNW,'(I2)') ISNW              ! convert band no. to text

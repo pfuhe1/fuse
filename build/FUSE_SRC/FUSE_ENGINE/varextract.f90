@@ -374,6 +374,7 @@ SELECT CASE (TRIM(VARNAME))
  CASE ('oflow_2')    ; XVAR_3d = W_FLUX_3d%OFLOW_2
  CASE ('oflow_2a')   ; XVAR_3d = W_FLUX_3d%OFLOW_2A
  CASE ('oflow_2b')   ; XVAR_3d = W_FLUX_3d%OFLOW_2B
+ CASE ('snwmelt')    ; XVAR_3d = W_FLUX_3d%SNWMELT
  CASE ('snwacml_z01'); XVAR_3d = MBANDS_VAR_4d(:,:,1,:)%SNOWACCMLTN
  CASE ('snwacml_z02'); XVAR_3d = MBANDS_VAR_4d(:,:,2,:)%SNOWACCMLTN
  CASE ('snwacml_z03'); XVAR_3d = MBANDS_VAR_4d(:,:,3,:)%SNOWACCMLTN

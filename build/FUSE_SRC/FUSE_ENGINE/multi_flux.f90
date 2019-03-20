@@ -2,6 +2,7 @@ MODULE multi_flux
  USE nrtype
  TYPE FLUXES
   REAL(SP)                             :: EFF_PPT     ! effective precipitation (mm day-1)
+  REAL(SP)                             :: SNWMELT     ! total snowpack melt (mm day-1)
   REAL(SP)                             :: SATAREA     ! saturated area (-)
   REAL(SP)                             :: QSURF       ! surface runoff (mm day-1)
   REAL(SP)                             :: EVAP_1A     ! evaporation from soil excess zone (mm day-1)
