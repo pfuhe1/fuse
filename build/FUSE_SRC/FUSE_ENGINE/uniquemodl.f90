@@ -69,7 +69,7 @@ LIST_Q_TDH(2)%MCOMPONENT = 'no_routing' ! no routing
 ! snow model switch
 LIST_SNOWM(1)%MCOMPONENT = 'no_snowmod' ! no snow model
 LIST_SNOWM(2)%MCOMPONENT = 'temp_index' ! temperature index snow model
-LIST_SNOWM(2)%MCOMPONENT = 'ti_redistr' ! temperature index snow model with snow redistribution
+LIST_SNOWM(3)%MCOMPONENT = 'ti_redistr' ! temperature index snow model with snow redistribution
 ! ---------------------------------------------------------------------------------------
 ! (2) LOOP THROUGH MODEL COMPONENTS AND DEFINE A SET OF UNIQUE MODELS
 ! ---------------------------------------------------------------------------------------
