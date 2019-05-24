@@ -342,7 +342,6 @@ MODULE FUSE_RMSE_MODULE  ! have as a module because of dynamic arrays
         PRINT *, 'Calculating performance metrics...'
         CALL MEAN_STATS()
         RMSE = MSTATS%RAW_RMSE
-        PRINT *, 'RMSE = ', RMSE
 
       ENDIF
 
