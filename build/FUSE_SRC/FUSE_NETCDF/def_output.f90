@@ -140,8 +140,10 @@ SUBROUTINE DEF_OUTPUT(nSpat1,nSpat2,NPSET,NTIM)
   ierr = nf_put_att_text(ncid_out,ivar_id,'axis',1,'X'); call handle_err(ierr)
 
   ! define the param_set variable
-  ierr = nf_def_var(ncid_out,'param_set',nf_char,1,param_dim,ivar_id); call handle_err(ierr)
-  ierr = nf_put_att_text(ncid_out,ivar_id,'units',1,'-'); call handle_err(ierr)
+  ! PFU: remove the param_set variable as it seems to cause issues with
+  ! processing the netcdf files
+  !ierr = nf_def_var(ncid_out,'param_set',nf_char,1,param_dim,ivar_id); call handle_err(ierr)
+  !ierr = nf_put_att_text(ncid_out,ivar_id,'units',1,'-'); call handle_err(ierr)
 
   ! end definitions
   IERR = NF_ENDDEF(ncid_out); call handle_err(ierr)
