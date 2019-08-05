@@ -33,7 +33,7 @@ USE multiforce, only: ancilF, ancilF_3d                   ! ancillary forcing da
 USE multiforce, ONLY: valDat                              ! response data
 USE multiforce, only: DELTIM
 USE multiforce, only: ISTART                              ! index for start of inference
-USE multiforce, ONLY: timeUnits,time_steps,julian_time_steps    ! time data
+USE multiforce, ONLY: timeUnits,time_steps,julian_day_input    ! time data
 USE multiforce, only: numtim_in, itim_in                  ! length of input time series and associated index
 USE multiforce, only: numtim_sim, itim_sim                ! length of simulated time series and associated index
 USE multiforce, only: numtim_sub, itim_sub                ! length of subperiod time series and associated index
@@ -241,52 +241,63 @@ print*, 'spatial dimensions of the grid= ', nSpat1, 'x' ,nSpat2
 print*, 'NA_VALUE = ', NA_VALUE
 print*, 'GRID_FLAG = ', GRID_FLAG
 
-! convert start and end date of the NetCDF input file to julian date
+! EXTRACT DATES AND DETERMINE ASSOCIATED INDICES
+
+! convert start and end date of the NetCDF input file to julian day (Julian day is the continuous
+! count of days since the beginning of the Julian Period around 4700 BC)
+
 call date_extractor(trim(timeUnits),iy,im,id,ih) ! break down reference date of NetCDF file
-call juldayss(iy,im,id,ih,            &          ! convert it to julian date
+call juldayss(iy,im,id,ih,            &          ! convert it to julian day
                 jdate_ref_netcdf,err,message)
 
-! julian date of each time step
-julian_time_steps=jdate_ref_netcdf+time_steps
+julian_day_input=jdate_ref_netcdf+time_steps ! julian day of each time step of the input file
 
-call caldatss(julian_time_steps(1),iy,im,id,ih,imin,isec)
+call caldatss(julian_day_input(1),iy,im,id,ih,imin,isec)
 print *, 'Start date input file=',iy,im,id
 
-call caldatss(julian_time_steps(numtim_in),iy,im,id,ih,imin,isec)
-print *, 'End date input file=',iy,im,id
+call caldatss(julian_day_input(numtim_in),iy,im,id,ih,imin,isec)
+print *, 'End date input file=  ',iy,im,id
 
-! convert date for simulation into julian date
+! convert dates for simulation into julian day
 call date_extractor(trim(date_start_sim),iy,im,id,ih)        ! break down date
-call juldayss(iy,im,id,ih,jdate_start_sim,err,message)       ! convert it to julian date
-if(jdate_start_sim.lt.minval(julian_time_steps))then         ! check forcing available
+call juldayss(iy,im,id,ih,jdate_start_sim,err,message)       ! convert it to julian day
+if(jdate_start_sim.lt.minval(julian_day_input))then          ! check forcing available
   call caldatss(jdate_start_sim,iy,im,id,ih,imin,isec)
-   print *, 'Error: hydrologic simulation cannot start on ',iy,im,id,' because atmospheric starts later (see above)';stop;
+   print *, 'Error: hydrologic simulation cannot start on ',iy,im,id,' because atmospheric forcing starts later (see above)';stop;
 endif
-sim_beg= minloc(abs(julian_time_steps-jdate_start_sim),1)    ! find correponding index
+sim_beg= minloc(abs(julian_day_input-jdate_start_sim),1)     ! find correponding index
+call caldatss(julian_day_input(sim_beg),iy,im,id,ih,imin,isec)
+print *, 'Date start sim=       ',iy,im,id
 
 call date_extractor(trim(date_end_sim),iy,im,id,ih)          ! break down date
-call juldayss(iy,im,id,ih,jdate_end_sim,err,message)         ! convert it to julian date
-if(jdate_end_sim.gt.maxval(julian_time_steps))then         ! check forcing available
+call juldayss(iy,im,id,ih,jdate_end_sim,err,message)         ! convert it to julian day
+if(jdate_end_sim.gt.maxval(julian_day_input))then         ! check forcing available
   call caldatss(jdate_end_sim,iy,im,id,ih,imin,isec)
-   print *, 'Error: hydrologic simulation cannot end on ',iy,im,id,' because atmospheric ends earlier (see above)';stop;
+   print *, 'Error: hydrologic simulation cannot end on ',iy,im,id,' because atmospheric forcing ends earlier (see above)';stop;
 endif
-sim_end= minloc(abs(julian_time_steps-jdate_end_sim),1)      ! find correponding index
+sim_end= minloc(abs(julian_day_input-jdate_end_sim),1)      ! find correponding index
+call caldatss(julian_day_input(sim_end),iy,im,id,ih,imin,isec)
+print *, 'Date end sim=         ',iy,im,id
 
 call date_extractor(trim(date_start_eval),iy,im,id,ih)       ! break down date
-call juldayss(iy,im,id,ih,jdate_start_eval,err,message)      ! convert it to julian date
-eval_beg= minloc(abs(julian_time_steps-jdate_start_eval),1)  ! find correponding index
+call juldayss(iy,im,id,ih,jdate_start_eval,err,message)      ! convert it to julian day
+eval_beg= minloc(abs(julian_day_input-jdate_start_eval),1)  ! find correponding index
+call caldatss(julian_day_input(eval_beg),iy,im,id,ih,imin,isec)
+print *, 'Date start eval=      ',iy,im,id
 
 call date_extractor(trim(date_end_eval),iy,im,id,ih)         ! break down date
-call juldayss(iy,im,id,ih,jdate_end_eval,err,message)        ! convert it to julian date
-eval_end= minloc(abs(julian_time_steps-jdate_end_eval),1)    ! find correponding index
+call juldayss(iy,im,id,ih,jdate_end_eval,err,message)        ! convert it to julian day
+eval_end= minloc(abs(julian_day_input-jdate_end_eval),1)    ! find correponding index
+call caldatss(julian_day_input(eval_end),iy,im,id,ih,imin,isec)
+print *, 'Date end eval=        ',iy,im,id
 
 ! check start before end
 if(jdate_start_sim.gt.jdate_end_sim)then; print *, 'Error: date_start_sim > date_end_sim '; stop; endif
 if(jdate_start_eval.gt.jdate_end_eval)then; print *, 'Error: date_start_eval > date_end_eval '; stop; endif
 
 ! check input data available for desired runs
-if(jdate_start_sim.lt.julian_time_steps(1))then; print *, 'Error: date_start_sim is before the start if the input data'; stop; endif
-if(jdate_end_sim.gt.julian_time_steps(numtim_in))then; print *, 'Error: the date_stop_sim is after the end of the input data'; stop; endif
+if(jdate_start_sim.lt.julian_day_input(1))then; print *, 'Error: date_start_sim is before the start if the input data'; stop; endif
+if(jdate_end_sim.gt.julian_day_input(numtim_in))then; print *, 'Error: the date_stop_sim is after the end of the input data'; stop; endif
 
 ! check input data available for desired runs
 if(jdate_start_eval.lt.jdate_start_sim)then; print *, 'Error: date_start_eval < date_start_sim'; stop; endif

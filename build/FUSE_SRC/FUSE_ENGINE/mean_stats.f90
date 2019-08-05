@@ -57,9 +57,10 @@ PRINT *, 'Number of time steps in evaluation period (EP) = ', NS
 ALLOCATE(QOBS(NS),QOBS_MASK(NS),QSIM(NS),STAT=IERR)
 IF (IERR.NE.0) STOP ' PROBLEM ALLOCATING SPACE IN MEAN_STATS.F90 '
 
-! extract OBS and SIM for evaluation period
-QSIM = AROUTE_3d(1,1,eval_beg-sim_beg:eval_end-sim_beg)%Q_ROUTED ! -sim_beg because AROUTE_3d is of length numtim_sim
-QOBS = aValid(1,1,eval_beg-sim_beg:eval_end-sim_beg)%OBSQ
+! extract OBS and SIM for evaluation period, note that sim_beg, eval_beg, sim_end,
+! eval_end are all with respect to julian_day_input
+QSIM = AROUTE_3d(1,1,eval_beg-sim_beg+1:eval_end-sim_beg+1)%Q_ROUTED
+QOBS = aValid(1,1,eval_beg-sim_beg+1:eval_end-sim_beg+1)%OBSQ
 
 ! check for missing QOBS values
 QOBS_MASK = QOBS.ne.REAL(NA_VALUE, KIND(SP)) ! find the time steps for which QOBS is available
@@ -67,7 +68,7 @@ NUM_AVAIL = COUNT(QOBS_MASK)	! number of time steps for which QOBS is available
 
 PRINT *, 'Number of time steps with observed streamflow in EP = ', NUM_AVAIL
 
-IF (IERR.EQ.0) THEN
+IF (NUM_AVAIL.EQ.0) THEN
 
   PRINT *, 'Skiping computation of error statistics because no observed streamflow data'
   MSTATS%NASH_SUTT=-9999
@@ -84,6 +85,8 @@ ELSE
   QSIM_AVAIL=PACK(QSIM,QOBS_MASK,QSIM_AVAIL)  ! moves QSIM time steps indicated by QOBS_MASK to QSIM_AVAIL
   											                      ! if no values is missing (i.e. NS = NUM_AVAIL) then QSIM_AVAIL
   										                      	! should be a copy of QSIM
+
+  PRINT *, 'QOBS_AVAIL',QOBS_AVAIL
 
   ! compute mean
   XB_OBS = SUM(QOBS_AVAIL(:)) / REAL(NUM_AVAIL, KIND(SP))

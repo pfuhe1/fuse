@@ -85,7 +85,7 @@ MODULE multiforce
   CHARACTER(len=strLen),dimension(:),allocatable   :: name_psets     ! name of parameter sets
   INTEGER(I4B)                          :: NUMPSET                   ! number of parameter sets
   REAL(sp),dimension(:),allocatable     :: time_steps                ! time steps (days)
-  REAL(sp),dimension(:),allocatable     :: julian_time_steps         ! time steps (julian days)
+  REAL(sp),dimension(:),allocatable     :: julian_day_input         ! time steps (julian days)
   CHARACTER(len=strLen)                 :: latUnits                  ! units string for latitude
   CHARACTER(len=strLen)                 :: lonUnits                  ! units string for longitude
   CHARACTER(len=strLen)                 :: timeUnits                 ! units string for time
