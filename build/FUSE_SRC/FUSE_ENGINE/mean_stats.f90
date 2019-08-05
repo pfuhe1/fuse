@@ -86,8 +86,6 @@ ELSE
   											                      ! if no values is missing (i.e. NS = NUM_AVAIL) then QSIM_AVAIL
   										                      	! should be a copy of QSIM
 
-  PRINT *, 'QOBS_AVAIL',QOBS_AVAIL
-
   ! compute mean
   XB_OBS = SUM(QOBS_AVAIL(:)) / REAL(NUM_AVAIL, KIND(SP))
   XB_SIM = SUM(QSIM_AVAIL(:)) / REAL(NUM_AVAIL, KIND(SP))

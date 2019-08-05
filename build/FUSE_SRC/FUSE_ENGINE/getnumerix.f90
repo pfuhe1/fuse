@@ -6,7 +6,7 @@ SUBROUTINE GETNUMERIX(err,message)
 ! ---------------------------------------------------------------------------------------
 ! Purpose:
 ! --------
-! Reads decisions/parameters that defines the numerical scheme 
+! Reads decisions/parameters that defines the numerical scheme
 ! ---------------------------------------------------------------------------------------
 ! Modules Modified:
 ! -----------------
@@ -14,7 +14,7 @@ SUBROUTINE GETNUMERIX(err,message)
 ! ---------------------------------------------------------------------------------------
 USE nrtype,ONLY:I4B,LGT,SP                            ! variable types, etc.
 use utilities_dmsl_kit_FUSE,only:getSpareUnit
-USE fuse_fileManager,only:SETNGS_PATH,MOD_NUMERIX     ! defines data directory                               
+USE fuse_fileManager,only:SETNGS_PATH,MOD_NUMERIX     ! defines data directory
 USE model_numerix,only:SOLUTION_METHOD,&              ! defines numerix decisions
   TEMPORAL_ERROR_CONTROL,INITIAL_NEWTON,JAC_RECOMPUTE,CHECK_OVERSHOOT,SMALL_ENDSTEP,&
   ERR_TRUNC_ABS,ERR_TRUNC_REL,ERR_ITER_FUNC,ERR_ITER_DX,THRESH_FRZE,FRACSTATE_MIN,&
@@ -36,7 +36,10 @@ INQUIRE(FILE=CFILE,EXIST=LEXIST)  ! check that control file exists
 IF (.NOT.LEXIST) THEN
  message="f-GETNUMERIX/model numerix file '"//trim(CFILE)//"' does not exist"
  err=100; return
-ENDIF 
+ELSE
+  PRINT *, 'Reading numeric decisions from', trim(CFILE)
+ENDIF
+
 ! open up model numerix file
 CALL getSpareUnit(IUNIT,err,message) ! make sure IUNIT is actually available
 IF (err/=0) THEN
@@ -55,7 +58,7 @@ READ(IUNIT,*) ERR_TRUNC_REL           ! Relative temporal truncation error toler
 READ(IUNIT,*) ERR_ITER_FUNC           ! Iteration convergence tolerance for function values
 READ(IUNIT,*) ERR_ITER_DX             ! Iteration convergence tolerance for dx
 READ(IUNIT,*) THRESH_FRZE             ! Threshold for freezing the Jacobian
-READ(IUNIT,*) FRACSTATE_MIN           ! Fractional minimum value of state (used so that derivatives are non-zero) 
+READ(IUNIT,*) FRACSTATE_MIN           ! Fractional minimum value of state (used so that derivatives are non-zero)
 READ(IUNIT,*) SAFETY                  ! Safety factor in step-size equation
 READ(IUNIT,*) RMIN                    ! Minimum step size multiplier
 READ(IUNIT,*) RMAX                    ! Maximum step size multiplier

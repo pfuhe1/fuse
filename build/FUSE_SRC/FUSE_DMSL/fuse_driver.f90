@@ -17,8 +17,6 @@ USE fuse_fileManager,only:fuse_SetDirsUndPhiles,&         ! sets directories and
           OUTPUT_PATH,FORCINGINFO,INPUT_PATH,&
           FMODEL_ID,&
           suffix_forcing,suffix_elev_bands,&
-          date_start_sim,date_end_sim,&
-          date_start_eval,date_end_eval,&
           numtim_sub_str,&
           KSTOP_str, MAXN_str, PCENTO_str
 
@@ -65,6 +63,7 @@ USE get_gforce_module,only:get_varid                      ! get netCDF ID for fo
 USE get_gforce_module,only:get_gforce_3d                  ! get forcing
 USE get_mbands_module,only:get_mbands, GET_MBANDS_INFO    ! get elevation bands for snow modeling
 USE get_fparam_module                                     ! get SCE parameters from NetCDF file
+USE GET_TIME_INDICES_MODULE                               ! get time indices
 USE time_io
 
 ! model numerix
@@ -107,15 +106,7 @@ INTEGER(I4B)                           :: ONEMOD=1        ! just specify one mod
 ! timers
 INTEGER(I4B)                           :: T_start_import_forcing ! system clock
 INTEGER(I4B)                           :: T_end_import_forcing   ! system clock
-real(sp)                               :: jdate_ref_netcdf
 ! dummies
-integer(i4b)                           :: iy,im,id,ih,imin  ! to temporarily store year, month, day, hour, min
-real(sp)                               :: isec              ! to temporarily store sec
-real(sp)                               :: jdate             ! to temporarily store a julian date
-real(sp)                               :: jdate_start_sim    ! date start simulation
-real(sp)                               :: jdate_end_sim      ! date end simulation
-real(sp)                               :: jdate_start_eval   ! date start evaluation period
-real(sp)                               :: jdate_end_eval     ! date end evaluation period
 CHARACTER(LEN=100)                     :: dummy_string       ! used for temporary data storage
 integer(i4b)                           :: file_pass          ! used read parameter list
 
@@ -200,12 +191,12 @@ PRINT *, 'Variables defined based on domain name:'
 PRINT *, 'forcefile:', TRIM(forcefile)
 PRINT *, 'ELEV_BANDS_NC:', TRIM(ELEV_BANDS_NC)
 
-! defines method/parameters used for numerical solution - what is this line doing here?
-CALL GETNUMERIX(ERR,MESSAGE)
-
 ! ---------------------------------------------------------------------------------------
 ! GET MODEL SETUP -- MODEL DEFINITION, AND PARAMETER AND VARIABLE INFO FOR ALL MODELS
 ! ---------------------------------------------------------------------------------------
+
+! defines method/parameters used for numerical solution based on numerix file
+CALL GETNUMERIX(ERR,MESSAGE)
 
 ! get forcing info from the txt file, ?? including NA_VALUE ??
 call force_info(fuse_mode,err,message)
@@ -241,86 +232,7 @@ print*, 'spatial dimensions of the grid= ', nSpat1, 'x' ,nSpat2
 print*, 'NA_VALUE = ', NA_VALUE
 print*, 'GRID_FLAG = ', GRID_FLAG
 
-! EXTRACT DATES AND DETERMINE ASSOCIATED INDICES
-
-! convert start and end date of the NetCDF input file to julian day (Julian day is the continuous
-! count of days since the beginning of the Julian Period around 4700 BC)
-
-call date_extractor(trim(timeUnits),iy,im,id,ih) ! break down reference date of NetCDF file
-call juldayss(iy,im,id,ih,            &          ! convert it to julian day
-                jdate_ref_netcdf,err,message)
-
-julian_day_input=jdate_ref_netcdf+time_steps ! julian day of each time step of the input file
-
-call caldatss(julian_day_input(1),iy,im,id,ih,imin,isec)
-print *, 'Start date input file=',iy,im,id
-
-call caldatss(julian_day_input(numtim_in),iy,im,id,ih,imin,isec)
-print *, 'End date input file=  ',iy,im,id
-
-! convert dates for simulation into julian day
-call date_extractor(trim(date_start_sim),iy,im,id,ih)        ! break down date
-call juldayss(iy,im,id,ih,jdate_start_sim,err,message)       ! convert it to julian day
-if(jdate_start_sim.lt.minval(julian_day_input))then          ! check forcing available
-  call caldatss(jdate_start_sim,iy,im,id,ih,imin,isec)
-   print *, 'Error: hydrologic simulation cannot start on ',iy,im,id,' because atmospheric forcing starts later (see above)';stop;
-endif
-sim_beg= minloc(abs(julian_day_input-jdate_start_sim),1)     ! find correponding index
-call caldatss(julian_day_input(sim_beg),iy,im,id,ih,imin,isec)
-print *, 'Date start sim=       ',iy,im,id
-
-call date_extractor(trim(date_end_sim),iy,im,id,ih)          ! break down date
-call juldayss(iy,im,id,ih,jdate_end_sim,err,message)         ! convert it to julian day
-if(jdate_end_sim.gt.maxval(julian_day_input))then         ! check forcing available
-  call caldatss(jdate_end_sim,iy,im,id,ih,imin,isec)
-   print *, 'Error: hydrologic simulation cannot end on ',iy,im,id,' because atmospheric forcing ends earlier (see above)';stop;
-endif
-sim_end= minloc(abs(julian_day_input-jdate_end_sim),1)      ! find correponding index
-call caldatss(julian_day_input(sim_end),iy,im,id,ih,imin,isec)
-print *, 'Date end sim=         ',iy,im,id
-
-call date_extractor(trim(date_start_eval),iy,im,id,ih)       ! break down date
-call juldayss(iy,im,id,ih,jdate_start_eval,err,message)      ! convert it to julian day
-eval_beg= minloc(abs(julian_day_input-jdate_start_eval),1)  ! find correponding index
-call caldatss(julian_day_input(eval_beg),iy,im,id,ih,imin,isec)
-print *, 'Date start eval=      ',iy,im,id
-
-call date_extractor(trim(date_end_eval),iy,im,id,ih)         ! break down date
-call juldayss(iy,im,id,ih,jdate_end_eval,err,message)        ! convert it to julian day
-eval_end= minloc(abs(julian_day_input-jdate_end_eval),1)    ! find correponding index
-call caldatss(julian_day_input(eval_end),iy,im,id,ih,imin,isec)
-print *, 'Date end eval=        ',iy,im,id
-
-! check start before end
-if(jdate_start_sim.gt.jdate_end_sim)then; print *, 'Error: date_start_sim > date_end_sim '; stop; endif
-if(jdate_start_eval.gt.jdate_end_eval)then; print *, 'Error: date_start_eval > date_end_eval '; stop; endif
-
-! check input data available for desired runs
-if(jdate_start_sim.lt.julian_day_input(1))then; print *, 'Error: date_start_sim is before the start if the input data'; stop; endif
-if(jdate_end_sim.gt.julian_day_input(numtim_in))then; print *, 'Error: the date_stop_sim is after the end of the input data'; stop; endif
-
-! check input data available for desired runs
-if(jdate_start_eval.lt.jdate_start_sim)then; print *, 'Error: date_start_eval < date_start_sim'; stop; endif
-if(jdate_end_eval.gt.jdate_end_sim)then; print *, 'Error: date_end_eval > date_end_sim'; stop; endif
-
-! determine length of simulations
-numtim_sim=sim_end-sim_beg+1
-istart=sim_beg
-
-! determine length of subperiods
-read(numtim_sub_str,*,iostat=err) numtim_sub ! convert string to integer
-
-if(numtim_sub.eq.-9999)then
-
-  print *, 'numtim_sub = -9999, FUSE will be run in 1 chunk of ',numtim_sim, 'time steps'
-
-  numtim_sub=numtim_sim ! no subperiods, run the whole time series
-
-else
-
-  print *, 'FUSE will be run in chunks of ',numtim_sub, 'time steps'
-
-end if
+CALL GET_TIME_INDICES()
 
 ! allocate space for the basin-average time series
 allocate(aForce(numtim_sub),aRoute(numtim_sub),stat=err)
@@ -443,7 +355,7 @@ ELSE IF(fuse_mode == 'calib_sce')THEN ! calibrate FUSE using SCE
   NUMPSET=1.2*MAXN         ! will be used to define the parameter set dimension of the NetCDF files
                            ! using 1.2MAXN since the final number of parameter sets produced by SCE is unknown
 
-ELSE IF(fuse_mode == 'run_best')THEN  ! run FUSE with best (highest RMSE) parameter set from a previous SCE calibration
+ELSE IF(fuse_mode == 'run_best')THEN  ! run FUSE with best (lowest RMSE) parameter set from a previous SCE calibration
 
   ! file from which SCE parameters will be loaded - same as FNAME_NETCDF_PARA above
   FNAME_NETCDF_PARA_SCE = TRIM(OUTPUT_PATH)//TRIM(dom_id)//'_'//TRIM(FMODEL_ID)//'_para_sce.nc'
@@ -543,7 +455,7 @@ ELSE IF(fuse_mode == 'calib_sce')THEN ! calibrate FUSE using SCE
 
   !PRINT *, 'Done calling the function again with the optimized parameter set!'
 
-ELSE IF(fuse_mode == 'run_best')THEN ! run FUSE with best (highest RMSE) parameter set from a previous SCE calibration
+ELSE IF(fuse_mode == 'run_best')THEN ! run FUSE with best (lowest RMSE) parameter set from a previous SCE calibration
 
   OUTPUT_FLAG=.TRUE.
 
