@@ -26,6 +26,7 @@ USE model_defnames                                        ! defines the integer 
 USE multiforce, ONLY: forcefile,vname_aprecip             ! model forcing structures
 USE multiforce, ONLY: AFORCE, aValid                      ! time series of lumped forcing/response data
 USE multiforce, ONLY: nspat1, nspat2                      ! grid dimensions
+USE multiforce, only: GRID_FLAG                          ! .true. if distributed
 USE multiforce, ONLY: GFORCE, GFORCE_3d                   ! spatial arrays of gridded forcing data
 USE multiforce, only: ancilF, ancilF_3d                   ! ancillary forcing data
 USE multiforce, ONLY: valDat                              ! response data
@@ -38,12 +39,10 @@ USE multiforce, only: numtim_sub, itim_sub                ! length of subperiod 
 USE multiforce, only: sim_beg,sim_end                     ! timestep indices
 USE multiforce, only: eval_beg,eval_end                   ! timestep indices
 USE multiforce, only: NUMPSET,name_psets                  ! number of parameter set and their names
-USE multiforce, only: nForce, nInput                      ! number of parameter set and their names
 
 USE multiforce, only: ncid_forc                           ! NetCDF forcing file ID
 USE multiforce, only: ncid_var                            ! NetCDF forcing variable ID
 USE multistate, only: ncid_out                            ! NetCDF output file ID
-USE multiforce, only: NA_VALUE                            ! NA_VALUE for the forcing
 
 USE multibands                                            ! basin band stuctures
 USE multiparam, ONLY: LPARAM, PARATT, NUMPAR              ! parameter metadata structures
@@ -97,7 +96,6 @@ INTEGER(I4B)                           :: ERR             ! error code
 CHARACTER(LEN=1024)                    :: MESSAGE         ! error message
 ! get spatial option
 CHARACTER(LEN=6)                       :: SPATIAL_OPTION  ! spatial option (catch or grid)
-LOGICAL(LGT)                           :: GRID_FLAG       ! spatial flag .true. if grid
 INTEGER(I4B),PARAMETER                 :: LUMPED=0        ! named variable for lumped simulations
 INTEGER(I4B),PARAMETER                 :: DISTRIBUTED=1   ! named variable for distributed simulations
 ! define model output
@@ -192,7 +190,7 @@ PRINT *, 'forcefile:', TRIM(forcefile)
 PRINT *, 'ELEV_BANDS_NC:', TRIM(ELEV_BANDS_NC)
 
 ! ---------------------------------------------------------------------------------------
-! GET MODEL SETUP -- MODEL DEFINITION, AND PARAMETER AND VARIABLE INFO FOR ALL MODELS
+! GET MODEL SETUP -- MODEL NUEMERICS, GRID, AND PARAMETER AND VARIABLE INFO FOR ALL MODELS
 ! ---------------------------------------------------------------------------------------
 
 ! defines method/parameters used for numerical solution based on numerix file
@@ -213,25 +211,7 @@ PRINT *, 'NCID_FORC is', ncid_forc
 call read_ginfo(ncid_forc,err,message)
 if(err/=0)then; write(*,*) trim(message); stop; endif
 
-! define the spatial flag (.true. is distributed)
-PRINT *, ' '
-if(nSpat1.GT.1.OR.nSpat2.GT.1) THEN
-  PRINT *, '### FUSE set to run in grid mode'
-  GRID_FLAG=.TRUE.
-  nInput=3   ! number of variables to be retrieved from input file (P, T, PET)
-
-ELSE
-
-  PRINT *, '### FUSE set to run in catchment mode'
-  GRID_FLAG=.FALSE.
-  nInput=4   ! number of variables to be retrieved from input file (P, T, PET, Q)
-
-ENDIF
-
-print*, 'spatial dimensions of the grid= ', nSpat1, 'x' ,nSpat2
-print*, 'NA_VALUE = ', NA_VALUE
-print*, 'GRID_FLAG = ', GRID_FLAG
-
+! determine period over which to run and evaluate FUSE and their associated indices
 CALL GET_TIME_INDICES()
 
 ! allocate space for the basin-average time series

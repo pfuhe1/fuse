@@ -78,6 +78,7 @@ MODULE multiforce
   ! dimension information
   INTEGER(i4b)                          :: nSpat1=-1                 ! number of points in 1st spatial dimension
   INTEGER(i4b)                          :: nSpat2=-1                 ! number of points in 2nd spatial dimension
+  LOGICAL(LGT)                          :: GRID_FLAG                 ! spatial flag .true. if grid
   REAL(sp)                              :: xlon                      ! longitude (degrees) for PET computation
   REAL(sp)                              :: ylat                      ! latitude (degrees) for PET computation
   REAL(sp),dimension(:),allocatable     :: latitude                  ! latitude (degrees)
