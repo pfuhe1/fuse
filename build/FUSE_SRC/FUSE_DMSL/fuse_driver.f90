@@ -76,7 +76,7 @@ IMPLICIT NONE
 ! GET COMMAND-LINE ARGUMENTS...
 ! ---------------------------------------------------------------------------------------
 CHARACTER(LEN=64)                      :: DatString          ! string defining forcing data
-CHARACTER(LEN=256)                      :: dom_id             ! ID of the domain
+CHARACTER(LEN=256)                     :: dom_id             ! ID of the domain
 CHARACTER(LEN=10)                      :: fuse_mode='      ' ! fuse execution mode (run_def, run_best, run_pre, calib_sce)
 CHARACTER(LEN=64)                      :: file_para_list     ! txt file containing list of parameter sets
 
@@ -190,7 +190,7 @@ PRINT *, 'forcefile:', TRIM(forcefile)
 PRINT *, 'ELEV_BANDS_NC:', TRIM(ELEV_BANDS_NC)
 
 ! ---------------------------------------------------------------------------------------
-! GET MODEL SETUP -- MODEL NUEMERICS, GRID, AND PARAMETER AND VARIABLE INFO FOR ALL MODELS
+! GET MODEL SETUP -- MODEL NUMERICS, GRID, AND PARAMETER AND VARIABLE INFO FOR ALL MODELS
 ! ---------------------------------------------------------------------------------------
 
 ! defines method/parameters used for numerical solution based on numerix file
@@ -211,12 +211,11 @@ PRINT *, 'NCID_FORC is', ncid_forc
 call read_ginfo(ncid_forc,err,message)
 if(err/=0)then; write(*,*) trim(message); stop; endif
 
-! determine period over which to run and evaluate FUSE and their associated indices
+! determine periods over which to run and evaluate FUSE and their associated indices
 CALL GET_TIME_INDICES()
 
 ! allocate space for the basin-average time series
-allocate(aForce(numtim_sub),aRoute(numtim_sub),stat=err)
-!allocate(aForce(numtim_sub),aRoute(numtim_sub),aValid(numtim_sub),stat=err)
+allocate(aForce(numtim_sub),aRoute(numtim_sub),stat=err) ! TODO: assess if still needed
 if(err/=0)then; write(*,*) 'unable to allocate space for basin-average time series [aForce,aRoute]'; stop; endif
 
 ! allocate space for the forcing grid and states
@@ -241,10 +240,9 @@ if(err/=0)then; write(*,*) 'unable to get NetCDF variables ID'; stop; endif
 ! Define model attributes (valid for all models)
 CALL UNIQUEMODL(NMOD)           ! get nmod unique models
 CALL GETPARMETA(ERR,MESSAGE)    ! read parameter metadata (parameter bounds etc.)
-
 IF (ERR.NE.0) WRITE(*,*) TRIM(MESSAGE); IF (ERR.GT.0) STOP
 
-! Identify a single model
+! Read the model decision file based on model ID and setup the model
 CALL SELECTMODL(FMODEL_ID,ERR=ERR,MESSAGE=MESSAGE)
 IF (ERR.NE.0) WRITE(*,*) TRIM(MESSAGE); IF (ERR.GT.0) STOP
 
@@ -257,9 +255,9 @@ CALL ASSIGN_PAR()        ! parameter definitions are stored in module multiparam
 CALL PAR_DERIVE(ERR,MESSAGE)
 IF (ERR.NE.0) WRITE(*,*) TRIM(MESSAGE); IF (ERR.GT.0) STOP
 
-! Define output and parameter files
-ONEMOD=1                 ! one file per model (i.e., model dimension = 1)
-PCOUNT=0                 ! counter for parameter sets evaluated (shared in MODULE multistats)
+! Define output and parameter files: TODO: evaluate if this is still needed
+ONEMOD=1       ! one file per model (i.e., model dimension = 1)
+PCOUNT=0       ! counter for parameter sets evaluated (shared in MODULE multistats)
 
 IF(fuse_mode == 'run_def')THEN ! run FUSE with default parameter values
 
