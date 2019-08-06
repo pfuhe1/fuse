@@ -77,8 +77,9 @@ IMPLICIT NONE
 ! ---------------------------------------------------------------------------------------
 CHARACTER(LEN=64)                      :: DatString          ! string defining forcing data
 CHARACTER(LEN=256)                     :: dom_id             ! ID of the domain
-CHARACTER(LEN=10)                      :: fuse_mode='      ' ! fuse execution mode (run_def, run_best, run_pre, calib_sce)
+CHARACTER(LEN=24)                      :: fuse_mode='      ' ! fuse execution mode (run_def, run_best, run_pre, calib_sce)
 CHARACTER(LEN=64)                      :: file_para_list     ! txt file containing list of parameter sets
+CHARACTER(LEN=64)                      :: file_para_dist     ! NetCDF file containing distributed parameter values
 
 ! ---------------------------------------------------------------------------------------
 ! SETUP MODELS FOR SIMULATION -- POPULATE DATA STRUCTURES
@@ -152,24 +153,30 @@ REAL(MSP)                              :: FUNCTN  ! function name for the model 
 CALL GETARG(1,DatString)  ! string defining forcinginfo file
 CALL GETARG(2,dom_id)     ! ID of the domain
 CALL GETARG(3,fuse_mode)  ! fuse execution mode (run_def, run_best, calib_sce)
-IF(TRIM(fuse_mode).EQ.'run_pre')  CALL GETARG(4,file_para_list)  ! fuse execution mode txt file containing list of parameter sets
+IF(TRIM(fuse_mode).EQ.'run_pre_catch')  CALL GETARG(4,file_para_list)  ! fuse execution mode txt file containing list of parameter sets
+IF(TRIM(fuse_mode).EQ.'run_pre_dist')   CALL GETARG(4,file_para_dist)  ! NetCDF file containing distributed parameter values
 
 ! check command-line arguments
 IF (LEN_TRIM(DatString).EQ.0) STOP '1st command-line argument is missing (fileManager)'
 IF (LEN_TRIM(dom_id).EQ.0) STOP '2nd command-line argument is missing (dom_id)'
 IF (LEN_TRIM(fuse_mode).EQ.0) STOP '3rd command-line argument is missing (fuse_mode)'
-IF(TRIM(fuse_mode).EQ.'run_pre')THEN
-  IF(LEN_TRIM(file_para_list).EQ.0)  STOP '4th command-line argument is missing (file_para_list) and is required in mode run_pre'
+IF(TRIM(fuse_mode).EQ.'run_pre_catch')THEN
+  IF(LEN_TRIM(file_para_list).EQ.0)  STOP '4th command-line argument is missing (file_para_list) and is required in mode run_pre_catch'
+ENDIF
+IF(TRIM(fuse_mode).EQ.'run_pre_dist')THEN
+  IF(LEN_TRIM(file_para_dist).EQ.0)  STOP '4th command-line argument is missing (file_para_dist) and is required in mode run_pre_dist'
 ENDIF
 
 ! print command-line arguments
 print*, '1st command-line argument (DatString) = ', trim(DatString)
 print*, '2nd command-line argument (dom_id) = ', trim(dom_id)
 print*, '3rd command-line argument (fuse_mode) = ', fuse_mode
-IF(TRIM(fuse_mode).EQ.'run_pre')THEN
+IF(TRIM(fuse_mode).EQ.'run_pre_catch')THEN
   print*, '4th command-line argument (file_para_list) = ', file_para_list
 ENDIF
-
+IF(TRIM(fuse_mode).EQ.'run_pre_dist')THEN
+  print*, '4th command-line argument (file_para_dist) = ', file_para_dist
+ENDIF
 ! ---------------------------------------------------------------------------------------
 ! SET PATHS AND FILES NAME
 ! ---------------------------------------------------------------------------------------
@@ -219,7 +226,7 @@ allocate(aForce(numtim_sub),aRoute(numtim_sub),stat=err) ! TODO: assess if still
 if(err/=0)then; write(*,*) 'unable to allocate space for basin-average time series [aForce,aRoute]'; stop; endif
 
 ! allocate space for the forcing grid and states
-allocate(ancilF(nspat1,nspat2), gForce(nspat1,nspat2), gState(nspat1,nspat2), stat=err)
+allocate(ancilF(nspat1,nspat2), gForce(nspat1,nspat2), gState(nspat1,nspat2), stat=err) ! TODO: assess if still needed
 if(err/=0)then; write(*,*) 'unable to allocate space for forcing grid GFORCE'; stop; endif
 
 ! allocate space for the forcing grid and states with a time dimension - only for subperiod
@@ -269,7 +276,7 @@ IF(fuse_mode == 'run_def')THEN ! run FUSE with default parameter values
   ALLOCATE(name_psets(NUMPSET))
   name_psets(1)='default_param_set'
 
-ELSE IF(fuse_mode == 'run_pre')THEN  ! run FUSE with pre-defined parameter values
+ELSE IF(fuse_mode == 'run_pre_catch')THEN  ! run FUSE at catchment scale with pre-defined parameter values
 
   ! read file_para_list twice:
   ! 1st pass: determine number of parameter set and allocate name_psets accordingly
@@ -301,7 +308,15 @@ ELSE IF(fuse_mode == 'run_pre')THEN  ! run FUSE with pre-defined parameter value
   end do
 
   ! files to which model run and parameter set will be saved
-  FNAME_NETCDF_RUNS = TRIM(OUTPUT_PATH)//TRIM(dom_id)//'_'//TRIM(FMODEL_ID)//'_runs_pre.nc'
+  FNAME_NETCDF_RUNS = TRIM(OUTPUT_PATH)//TRIM(dom_id)//'_'//TRIM(FMODEL_ID)//'_runs_pre_catch.nc'
+  FNAME_NETCDF_PARA = TRIM(OUTPUT_PATH)//TRIM(dom_id)//'_'//TRIM(FMODEL_ID)//'_para_pre_out.nc'
+
+ELSE IF(fuse_mode == 'run_pre_dist')THEN  ! run FUSE on a grid with pre-defined parameter values
+
+  NUMPSET=1  ! currently only 1 parameter set per grid cell
+
+  ! files to which model run and parameter set will be saved
+  FNAME_NETCDF_RUNS = TRIM(OUTPUT_PATH)//TRIM(dom_id)//'_'//TRIM(FMODEL_ID)//'_runs_pre_dist.nc'
   FNAME_NETCDF_PARA = TRIM(OUTPUT_PATH)//TRIM(dom_id)//'_'//TRIM(FMODEL_ID)//'_para_pre_out.nc'
 
 ELSE IF(fuse_mode == 'calib_sce')THEN ! calibrate FUSE using SCE
@@ -377,7 +392,7 @@ IF(fuse_mode == 'run_def')THEN ! run FUSE with default parameter values
   CALL FUSE_RMSE(APAR,GRID_FLAG,NCID_FORC,RMSE,OUTPUT_FLAG,NUMPSET)
   print *, 'Done running FUSE with default parameter values'
 
-ELSE IF(fuse_mode == 'run_pre')THEN ! run FUSE with pre-defined parameter values
+ELSE IF(fuse_mode == 'run_pre_catch')THEN ! run FUSE with pre-defined parameter values
 
   OUTPUT_FLAG=.TRUE.
 
@@ -386,9 +401,8 @@ ELSE IF(fuse_mode == 'run_pre')THEN ! run FUSE with pre-defined parameter values
     FNAME_NETCDF_PARA_PRE=TRIM(OUTPUT_PATH)//name_psets(IPSET)
     PRINT *, 'Loading parameter set ',IPSET,':'
 
-    ! load specific parameter set
-    ! 2nd argument is 1 because first (and only) parameter set should be loaded
-    CALL GET_PRE_PARAM(FNAME_NETCDF_PARA_PRE,1,ONEMOD,NUMPAR,APAR)
+    ! not ideal because this overwrites default param value ?
+    CALL GET_PRE_PARAM(FNAME_NETCDF_PARA_PRE,1,ONEMOD,NUMPAR,APAR)	! the sce_best mode so it only has one parameter set - the best one
 
     print *, 'Running FUSE with pre-defined parameter set'
     CALL FUSE_RMSE(APAR,GRID_FLAG,NCID_FORC,RMSE,OUTPUT_FLAG,IPSET)
@@ -397,6 +411,19 @@ ELSE IF(fuse_mode == 'run_pre')THEN ! run FUSE with pre-defined parameter values
   end do
 
   DEALLOCATE(name_psets)
+
+ELSE IF(fuse_mode == 'run_pre_dist')THEN ! run FUSE with pre-defined parameter values
+
+ OUTPUT_FLAG=.TRUE.
+
+ FNAME_NETCDF_PARA_PRE=TRIM(OUTPUT_PATH)//TRIM(file_para_dist)
+
+ PRINT *, 'Loading distributed parameters from: ',TRIM(FNAME_NETCDF_PARA_PRE)
+ !CALL GET_DIST_PARAM(FNAME_NETCDF_PARA_PRE,1,NUMPAR,MPARAM_2D) ! second argument: only load first parameter set
+
+ print *, 'Running FUSE with pre-defined parameter set'
+ CALL FUSE_RMSE(APAR,GRID_FLAG,NCID_FORC,RMSE,OUTPUT_FLAG,IPSET)
+ print *, 'Done running FUSE with pre-defined parameter set'
 
 ELSE IF(fuse_mode == 'calib_sce')THEN ! calibrate FUSE using SCE
 

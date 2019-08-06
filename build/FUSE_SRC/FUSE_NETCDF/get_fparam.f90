@@ -44,8 +44,7 @@ include 'netcdf.inc'                                  ! use netCDF libraries
 ! check that the file exists
 INQUIRE(FILE=TRIM(NETCDF_FILE),EXIST=LEXIST)
 IF (.NOT.LEXIST) THEN
- print *, 'The NetCDF file containing the predefined parameter set does not exist:'
- print *, TRIM(NETCDF_FILE)
+ print *, 'The NetCDF file containing the predefined parameter set does not exist:', TRIM(NETCDF_FILE)
  STOP
 ENDIF
 
@@ -90,6 +89,88 @@ PRINT *, 'Predefined parameter set loaded into XPAR!'
 IERR = NF_CLOSE(NCID)
 ! ---------------------------------------------------------------------------------------
 END SUBROUTINE GET_PRE_PARAM
+
+SUBROUTINE GET_DIST_PARAM(NETCDF_FILE,ISET,IMOD,MPAR,XPAR)
+
+ ! ---------------------------------------------------------------------------------------
+! Creator:
+! --------
+! Nans Addor, 2019 - Based on GET_PRE_PARAM
+! ---------------------------------------------------------------------------------------
+! Purpose:
+! --------
+! Load distributed parameter values from a NetCDF file
+! ---------------------------------------------------------------------------------------
+USE nrtype                                            ! variable types, etc.
+USE fuse_fileManager, only : OUTPUT_PATH              ! define output path
+USE multiparam, ONLY: LPARAM, NUMPAR                  ! parameter names
+IMPLICIT NONE
+! input
+CHARACTER(LEN=*), INTENT(IN)           :: NETCDF_FILE ! NetCDF file containing parameter values
+INTEGER(I4B), INTENT(IN)               :: ISET        ! indice of parameter set to extract
+INTEGER(I4B), INTENT(IN)               :: IMOD        ! model index: TODO - still needed? see also other occurrences in this file
+INTEGER(I4B), INTENT(IN)               :: MPAR        ! number of model parameters
+! internal
+INTEGER(I4B), DIMENSION(1)             :: INDX        ! indices for parameter extraction
+LOGICAL(LGT)                           :: LEXIST      ! .TRUE. if NetCDF file exists
+INTEGER(I4B)                           :: IERR        ! error code
+INTEGER(I4B)                           :: NCID        ! NetCDF file ID
+INTEGER(I4B)                           :: IDIMID      ! NetCDF dimension ID
+INTEGER(I4B)                           :: IVARID      ! NetCDF variable ID
+INTEGER(I4B)                           :: IPAR        ! loop through model parameters
+INTEGER(I4B)                           :: NPAR        ! number of parameter sets in output file
+REAL(DP)                               :: APAR        ! parameter value (single precision)
+! output
+REAL(SP), DIMENSION(MPAR), INTENT(OUT) :: XPAR        ! parameter value (whatever precision SP is)
+include 'netcdf.inc'                                  ! use netCDF libraries
+! ---------------------------------------------------------------------------------------
+! check that the file exists
+INQUIRE(FILE=TRIM(NETCDF_FILE),EXIST=LEXIST)
+IF (.NOT.LEXIST) THEN
+ print *, 'The NetCDF file containing the predefined parameter set does not exist:'
+ print *, TRIM(NETCDF_FILE)
+ STOP
+ENDIF
+
+ print *, 'Opening parameter file:', TRIM(NETCDF_FILE)
+
+ ! open file
+ IERR = NF_OPEN(TRIM(NETCDF_FILE),NF_NOWRITE,NCID); CALL HANDLE_ERR(IERR)
+
+ ! get number of parameter sets
+ IERR = NF_INQ_DIMID(NCID,'par',IDIMID); CALL HANDLE_ERR(IERR)
+ IERR = NF_INQ_DIMLEN(NCID,IDIMID,NPAR); CALL HANDLE_ERR(IERR)
+ PRINT *, 'Number of parameter sets in parameter file', NPAR
+
+ ! loop through parameters
+ DO IPAR=1,NUMPAR
+
+   PRINT *, 'Trying to extract', TRIM(LPARAM(IPAR)%PARNAME)
+   ! get parameter id
+  IERR = NF_INQ_VARID(NCID,TRIM(LPARAM(IPAR)%PARNAME),IVARID); CALL HANDLE_ERR(IERR)
+
+  ! get the data
+  !ierr = nf90_get_var(ncid_forc, ncid_var(ivar), gTemp, start=(/1,1,iset/), count=(/nSpat1,nSpat2,iset/)); CALL HANDLE_ERR(IERR)
+  !if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr)); return; endif
+
+  ! save the data in the structure -- and convert fluxes to mm/day
+!  gForce_3d(:,:,1:numtim)%ppt = gTemp(:,:,:)*amult_ppt
+!  IERR = NF_GET_VAR1_DOUBLE(NCID,IVARID,INDX,APAR); CALL HANDLE_ERR(IERR)
+
+
+   ! put parameter value in the output vector
+   XPAR(IPAR) = APAR
+
+!   print *, 'PARAM VALUES:',LPARAM(IPAR)%PARNAME, '->', APAR
+
+ END DO
+
+ PRINT *, 'Predefined parameter set loaded into XPAR!'
+
+ ! close NetCDF file
+IERR = NF_CLOSE(NCID)
+! ---------------------------------------------------------------------------------------
+END SUBROUTINE GET_DIST_PARAM
 
 SUBROUTINE GET_SCE_PARAM(NETCDF_FILE,IMOD,MPAR,XPAR)
 ! ---------------------------------------------------------------------------------------
