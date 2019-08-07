@@ -46,6 +46,7 @@ USE multistate, only: ncid_out                            ! NetCDF output file I
 
 USE multibands                                            ! basin band stuctures
 USE multiparam, ONLY: LPARAM, PARATT, NUMPAR              ! parameter metadata structures
+USE multiparam, ONLY: MPARAM_2D, DPARAM_2D                ! structures for gridded parameters
 USE multistate, only: gState                              ! gridded state variables
 USE multistate, only: gState_3d                           ! gridded state variables with a time dimension
 USE multiroute, ONLY: AROUTE                              ! model routing structures
@@ -97,8 +98,8 @@ INTEGER(I4B)                           :: ERR             ! error code
 CHARACTER(LEN=1024)                    :: MESSAGE         ! error message
 ! get spatial option
 CHARACTER(LEN=6)                       :: SPATIAL_OPTION  ! spatial option (catch or grid)
-INTEGER(I4B),PARAMETER                 :: LUMPED=0        ! named variable for lumped simulations
-INTEGER(I4B),PARAMETER                 :: DISTRIBUTED=1   ! named variable for distributed simulations
+INTEGER(I4B),PARAMETER                 :: LUMPED=0        ! named variable for lumped simulations TODO:still needed?
+INTEGER(I4B),PARAMETER                 :: DISTRIBUTED=1   ! named variable for distributed simulations TODO:still needed?
 ! define model output
 LOGICAL(LGT)                           :: OUTPUT_FLAG     ! .TRUE. = write time series output
 INTEGER(I4B)                           :: ONEMOD=1        ! just specify one model
@@ -232,6 +233,9 @@ if(err/=0)then; write(*,*) 'unable to allocate space for forcing grid GFORCE'; s
 ! allocate space for the forcing grid and states with a time dimension - only for subperiod
 allocate(AROUTE_3d(nspat1,nspat2,numtim_sub), gState_3d(nspat1,nspat2,numtim_sub+1),gForce_3d(nspat1,nspat2,numtim_sub),aValid(nspat1,nspat2,numtim_sub),stat=err)
 if(err/=0)then; write(*,*) 'unable to allocate space for 3d structure'; stop; endif
+
+! allocate space for gridded parameter values
+allocate(MPARAM_2D(nspat1,nspat2),DPARAM_2D(nspat1,nspat2))
 
 ! get elevation band info, in particular N_BANDS
 CALL GET_MBANDS_INFO(ELEV_BANDS_NC,err,message) ! read band data from NetCDF file
@@ -420,7 +424,7 @@ ELSE IF(fuse_mode == 'run_pre_dist')THEN ! run FUSE with pre-defined parameter v
  FNAME_NETCDF_PARA_PRE=TRIM(OUTPUT_PATH)//TRIM(file_para_dist)
 
  PRINT *, 'Loading distributed parameters from: ',TRIM(FNAME_NETCDF_PARA_PRE)
- !CALL GET_DIST_PARAM(FNAME_NETCDF_PARA_PRE,1,NUMPAR,MPARAM_2D) ! second argument: only load first parameter set
+ CALL GET_DIST_PARAM(FNAME_NETCDF_PARA_PRE,NUMPAR,MPARAM_2D)
 
  print *, 'Running FUSE with distributed parameter set'
  CALL FUSE_RMSE(APAR,GRID_FLAG,NCID_FORC,RMSE,OUTPUT_FLAG,IPSET)

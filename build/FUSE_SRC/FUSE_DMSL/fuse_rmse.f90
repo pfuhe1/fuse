@@ -93,7 +93,7 @@ MODULE FUSE_RMSE_MODULE  ! have as a module because of dynamic arrays
     INTEGER(I4B)                           :: ERR            ! error code
     CHARACTER(LEN=CLEN)                    :: MESSAGE        ! error message
     CHARACTER(LEN=CLEN)                    :: CMESSAGE       ! error message of downwind routine
-    INTEGER(I4B),PARAMETER::UNT=6  !1701 ! 6
+    INTEGER(I4B),PARAMETER::UNT=6
 
     ! ---------------------------------------------------------------------------------------
     ! allocate state vectors
