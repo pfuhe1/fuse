@@ -297,7 +297,7 @@ ELSE IF(fuse_mode == 'run_pre_catch')THEN  ! run FUSE at catchment scale with pr
           name_psets(NUMPSET) = dummy_string ! save file names
         ENDIF
 
-      END DO ! looping through parameter files
+      END DO
 
     CLOSE(21)
 
@@ -400,8 +400,10 @@ ELSE IF(fuse_mode == 'run_pre_catch')THEN ! run FUSE with pre-defined parameter 
     FNAME_NETCDF_PARA_PRE=TRIM(OUTPUT_PATH)//name_psets(IPSET)
     PRINT *, 'Loading parameter set ',IPSET,':'
 
-    ! not ideal because this overwrites default param value ?
-    CALL GET_PRE_PARAM(FNAME_NETCDF_PARA_PRE,1,ONEMOD,NUMPAR,APAR)	! parameter file generated sce_best, so it only has one parameter set - the best one
+    ! load parameter set into APAR, note that this overwrites APAR
+    ! 1 because parameter file generated sce_best,
+    ! so it only has one parameter set, the best one
+    CALL GET_PRE_PARAM(FNAME_NETCDF_PARA_PRE,1,ONEMOD,NUMPAR,APAR)
 
     print *, 'Running FUSE with pre-defined parameter set'
     CALL FUSE_RMSE(APAR,GRID_FLAG,NCID_FORC,RMSE,OUTPUT_FLAG,IPSET)
@@ -420,15 +422,16 @@ ELSE IF(fuse_mode == 'run_pre_dist')THEN ! run FUSE with pre-defined parameter v
  PRINT *, 'Loading distributed parameters from: ',TRIM(FNAME_NETCDF_PARA_PRE)
  !CALL GET_DIST_PARAM(FNAME_NETCDF_PARA_PRE,1,NUMPAR,MPARAM_2D) ! second argument: only load first parameter set
 
- print *, 'Running FUSE with pre-defined parameter set'
+ print *, 'Running FUSE with distributed parameter set'
  CALL FUSE_RMSE(APAR,GRID_FLAG,NCID_FORC,RMSE,OUTPUT_FLAG,IPSET)
- print *, 'Done running FUSE with pre-defined parameter set'
+ print *, 'Done running FUSE with distributed parameter set'
 
 ELSE IF(fuse_mode == 'calib_sce')THEN ! calibrate FUSE using SCE
 
   ! Calibrate FUSE with SCE
   OUTPUT_FLAG=.FALSE.
 
+  ! ASCII output file for SCE
   FNAME_ASCII = TRIM(OUTPUT_PATH)//TRIM(dom_id)//'_'//TRIM(FMODEL_ID)//'_sce_output.txt'
 
   ! convert from SP used in FUSE to MSP used in SCE
@@ -441,7 +444,7 @@ ELSE IF(fuse_mode == 'calib_sce')THEN ! calibrate FUSE using SCE
   URAND_MSP=URAND
 
   ! open up ASCII output file
-  print *, 'Creating SCE output file:', trim(FNAME_ASCII)
+  print *, 'Creating SCE ASCII output file:', trim(FNAME_ASCII)
   ISCE = 96; OPEN(ISCE,FILE=TRIM(FNAME_ASCII))
 
   ! optimize (returns A and AF)
@@ -472,8 +475,8 @@ ELSE IF(fuse_mode == 'run_best')THEN ! run FUSE with best (lowest RMSE) paramete
 
 ELSE
 
-print *, 'Unexpected fuse_mode!'
-stop
+  print *, 'Unexpected fuse_mode:',fuse_mode
+  stop
 
 ENDIF
 
