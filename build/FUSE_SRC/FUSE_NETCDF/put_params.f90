@@ -48,7 +48,7 @@ IERR = NF_OPEN(TRIM(FNAME_NETCDF_PARA),NF_WRITE,NCID); CALL HANDLE_ERR(IERR)
 
  END DO  ! (ivar)
 
- ! put model description
+ ! put model description - TODO: definitely uncomment this
  !IERR = NF_INQ_VARID(NCID,'model_description',IVAR_ID); CALL HANDLE_ERR(IERR)
 
  ! print *, 'Writing model decisions to this NetCDF file:', TRIM(FNAME_NETCDF)

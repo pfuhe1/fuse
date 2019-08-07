@@ -235,6 +235,7 @@ allocate(AROUTE_3d(nspat1,nspat2,numtim_sub), gState_3d(nspat1,nspat2,numtim_sub
 if(err/=0)then; write(*,*) 'unable to allocate space for 3d structure'; stop; endif
 
 ! allocate space for gridded parameter values
+print *, 'Allocating structures of following dimensions for MPARAM_2D and DPARAM_2D', nspat1, 'x',nspat2
 allocate(MPARAM_2D(nspat1,nspat2),DPARAM_2D(nspat1,nspat2))
 
 ! get elevation band info, in particular N_BANDS
@@ -426,9 +427,9 @@ ELSE IF(fuse_mode == 'run_pre_dist')THEN ! run FUSE with pre-defined parameter v
  PRINT *, 'Loading distributed parameters from: ',TRIM(FNAME_NETCDF_PARA_PRE)
  CALL GET_DIST_PARAM(FNAME_NETCDF_PARA_PRE,NUMPAR,MPARAM_2D)
 
- print *, 'Running FUSE with distributed parameter set'
- CALL FUSE_RMSE(APAR,GRID_FLAG,NCID_FORC,RMSE,OUTPUT_FLAG,IPSET)
- print *, 'Done running FUSE with distributed parameter set'
+ print *, 'Running FUSE with distributed parameter values'
+ CALL RUN_FUSE(MPARAM_2D,GRID_FLAG,NCID_FORC,OUTPUT_FLAG,1)
+ print *, 'Done running FUSE with distributed parameter values'
 
 ELSE IF(fuse_mode == 'calib_sce')THEN ! calibrate FUSE using SCE
 

@@ -24,7 +24,7 @@ USE nrtype                                            ! variable types, etc.
 USE multiparam                                        ! model parameters
 IMPLICIT NONE
 ! input
-REAL(SP), INTENT(IN), DIMENSION(:)     :: PARSET      ! parameter set 
+REAL(SP), INTENT(IN), DIMENSION(:)     :: PARSET      ! parameter set
 ! local
 INTEGER(I4B)                           :: IPAR        ! looping
 ! ---------------------------------------------------------------------------------------

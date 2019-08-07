@@ -147,13 +147,13 @@ ENDIF
    DO iSpat1=1,nSpat1
       DO IPAR=1,NUMPAR       ! loop through parameters
 
-       ! get parameter id
-       IERR = NF_INQ_VARID(NCID,TRIM(LPARAM(IPAR)%PARNAME),IVARID); CALL HANDLE_ERR(IERR)
+        ! get parameter id
+        IERR = NF_INQ_VARID(NCID,TRIM(LPARAM(IPAR)%PARNAME),IVARID); CALL HANDLE_ERR(IERR)
 
-       ! get parameter value
-       INDX = (/iSpat1,iSpat2/)
-       IERR = NF_GET_VAR1_DOUBLE(NCID,IVARID,INDX,APAR); CALL HANDLE_ERR(IERR)
-       XPAR(IPAR) = APAR
+        ! get parameter value
+        INDX = (/iSpat1,iSpat2/)
+        IERR = NF_GET_VAR1_DOUBLE(NCID,IVARID,INDX,APAR); CALL HANDLE_ERR(IERR)
+        XPAR(IPAR) = APAR
 
       END DO
 
