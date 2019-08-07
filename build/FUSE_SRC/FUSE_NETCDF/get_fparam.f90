@@ -79,8 +79,6 @@ DO IPAR=1,NUMPAR
   ! put parameter value in the output vector
   XPAR(IPAR) = APAR
 
-  print *, 'PARAM VALUES:',LPARAM(IPAR)%PARNAME, '->', APAR
-
 END DO
 
 PRINT *, 'Predefined parameter set loaded into XPAR!'
@@ -104,7 +102,9 @@ SUBROUTINE GET_DIST_PARAM(NETCDF_FILE,ISET,IMOD,MPAR,XPAR)
 USE nrtype                                            ! variable types, etc.
 USE fuse_fileManager, only : OUTPUT_PATH              ! define output path
 USE multiparam, ONLY: LPARAM, NUMPAR                  ! parameter names
+USE multiparam, ONLY: MPARAM_2D, DPARAM_2D            ! structures for gridded parameter values
 IMPLICIT NONE
+
 ! input
 CHARACTER(LEN=*), INTENT(IN)           :: NETCDF_FILE ! NetCDF file containing parameter values
 INTEGER(I4B), INTENT(IN)               :: ISET        ! indice of parameter set to extract

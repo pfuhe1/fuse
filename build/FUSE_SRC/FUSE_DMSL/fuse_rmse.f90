@@ -36,7 +36,7 @@ MODULE FUSE_RMSE_MODULE  ! have as a module because of dynamic arrays
     USE multiforce, ONLY:gForce,gForce_3d                    ! gridded forcing data
     USE multistate, ONLY:fracstate0,TSTATE,MSTATE,FSTATE,&   ! model states
          HSTATE                              ! model states (continued)
-    USE multiforce, ONLY:NA_VALUE, NA_VALUE_SP              ! NA_VALUE for the forcing
+    USE multiforce, ONLY:NA_VALUE, NA_VALUE_SP               ! NA_VALUE for the forcing
     USE multistate, ONLY:gState,gState_3d                    ! gridded state variables
     USE multiroute, ONLY:MROUTE,AROUTE,AROUTE_3d             ! routed runoff
     USE multistats, ONLY:MSTATS,PCOUNT,MOD_IX                ! access model statistics; counter for param set
@@ -106,23 +106,28 @@ MODULE FUSE_RMSE_MODULE  ! have as a module because of dynamic arrays
        IF (MPARAM_FLAG) PCOUNT = PCOUNT + 1
     ENDIF
 
-    ! add parameter set to the data structure
+    ! add parameter set to the data structure, i.e., populate MPARAM
     CALL PUT_PARSET(XPAR)
-    PRINT *, 'Parameter set added to data structure:'
-    PRINT *, XPAR
-    !DO IPAR=1,NUMPAR; WRITE(*,'(A11,1X,F9.3)') LPARAM(IPAR), XPAR(IPAR); END DO
+    PRINT *, 'Parameter set added to data structures MPARAM and DPARAM'
 
-    ! compute derived model parameters (bucket sizes, etc.)
+    ! compute derived model parameters (bucket sizes, etc.), i.e., populate DPARAM
     CALL PAR_DERIVE(ERR,MESSAGE)
     IF (ERR.NE.0) WRITE(*,*) TRIM(MESSAGE); IF (ERR.GT.0) STOP
+
+    !!! INITIALISE MODEL AND ALLOCATE DATA STRUCTRUES
 
     ! initialize model states over the 2D gridded domain
     DO iSpat2=1,nSpat2
       DO iSpat1=1,nSpat1
-          CALL INIT_STATE(fracState0)             ! define FSTATE - fracState0 is shared in MODULE multistate
-          !gState(iSpat1,iSpat2) = FSTATE         ! put the state into the 2-d structure
-          gState_3d(iSpat1,iSpat2,1) = FSTATE     ! put the state into the 3_d structure
-       END DO
+
+        ! load parameter values into DPARAM and MPARAM,ready for INIT_STATE
+        !MPARAM=MPARAM_2D(iSpat1,iSpat2)
+        !DPARAM=DPARAM_2D(iSpat1,iSpat2)
+
+        CALL INIT_STATE(fracState0)             ! define FSTATE at fraction (FRAC) of capacity - curently 25%
+        gState_3d(iSpat1,iSpat2,1) = FSTATE     ! put the state into the 3_d structure
+
+      END DO
     END DO
     PRINT *, 'Model states initialized over the 2D gridded domain'
 
@@ -135,7 +140,7 @@ MODULE FUSE_RMSE_MODULE  ! have as a module because of dynamic arrays
       DO iSpat2=1,nSpat2
         DO iSpat1=1,nSpat1
          DO IBANDS=1,N_BANDS
-            MBANDS_VAR_4d(iSpat1,iSpat2,IBANDS,1)%SWE=0.0_sp            ! band snowpack water equivalent (mm)
+            MBANDS_VAR_4d(iSpat1,iSpat2,IBANDS,1)%SWE=0.0_sp         ! band snowpack water equivalent (mm)
             MBANDS_VAR_4d(iSpat1,iSpat2,IBANDS,1)%SNOWACCMLTN=0.0_sp ! new snow accumulation in band (mm day-1)
             MBANDS_VAR_4d(iSpat1,iSpat2,IBANDS,1)%SNOWMELT=0.0_sp    ! snowmelt in band (mm day-1)
             MBANDS_VAR_4d(iSpat1,iSpat2,IBANDS,1)%DSWE_DT=0.0_sp     ! rate of change of band SWE (mm day-1)
@@ -159,6 +164,8 @@ MODULE FUSE_RMSE_MODULE  ! have as a module because of dynamic arrays
     ! initialize indices and subperiod counter
     itim_sub = 1
     itim_sim = 1
+
+    !!! RUN FUSE
 
     ! loop through time
     DO ITIM_IN=sim_beg,sim_end

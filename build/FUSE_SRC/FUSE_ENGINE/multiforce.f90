@@ -51,9 +51,9 @@ MODULE multiforce
   TYPE(FDATA)                           :: MFORCE     ! model forcing data for a single time step
   TYPE(fData), DIMENSION(:,:), POINTER  :: gForce     ! model forcing data for a 2-d grid
   TYPE(aData), DIMENSION(:,:), POINTER  :: ancilF     ! ancillary forcing data for the 2-d grid
-  TYPE(fData), DIMENSION(:,:,:), POINTER  :: gForce_3d  ! model forcing data for a 3-d grid - let's add time
-  TYPE(aData), DIMENSION(:,:,:), POINTER  :: ancilF_3d  ! ancillary forcing data for the 3-d grid - because time is timeless
-
+  TYPE(fData), DIMENSION(:,:,:), POINTER  :: gForce_3d  ! model forcing data for a 3-d grid (lat, lon, time)
+  TYPE(aData), DIMENSION(:,:,:), POINTER  :: ancilF_3d  ! ancillary forcing data for the 3-d grid
+  
   ! timing information - note that numtim_in >= numtim_sim >= numtim_sub
   CHARACTER(len=20)                     :: date_start_input          ! date start input time series
   CHARACTER(len=20)                     :: date_end_input            ! date end input time series

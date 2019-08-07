@@ -380,8 +380,7 @@ DO IPAR=1,NUMPAR
  CALL GETPAR_STR(LPARAM(IPAR)%PARNAME,PARAM_META)
  BL(IPAR)   = PARAM_META%PARLOW  ! lower boundary
  BU(IPAR)   = PARAM_META%PARUPP  ! upper boundary
- APAR(IPAR) = PARAM_META%PARDEF  ! using default parameter values
- !if(PARAM_META%PARFIT) print*, LPARAM(IPAR)%PARNAME, PARAM_META%PARDEF
+ APAR(IPAR) = PARAM_META%PARDEF  ! initialise APAR using default parameter values
 END DO
 
 IF(fuse_mode == 'run_def')THEN ! run FUSE with default parameter values
@@ -402,7 +401,7 @@ ELSE IF(fuse_mode == 'run_pre_catch')THEN ! run FUSE with pre-defined parameter 
     PRINT *, 'Loading parameter set ',IPSET,':'
 
     ! not ideal because this overwrites default param value ?
-    CALL GET_PRE_PARAM(FNAME_NETCDF_PARA_PRE,1,ONEMOD,NUMPAR,APAR)	! the sce_best mode so it only has one parameter set - the best one
+    CALL GET_PRE_PARAM(FNAME_NETCDF_PARA_PRE,1,ONEMOD,NUMPAR,APAR)	! parameter file generated sce_best, so it only has one parameter set - the best one
 
     print *, 'Running FUSE with pre-defined parameter set'
     CALL FUSE_RMSE(APAR,GRID_FLAG,NCID_FORC,RMSE,OUTPUT_FLAG,IPSET)

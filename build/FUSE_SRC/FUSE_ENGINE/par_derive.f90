@@ -22,7 +22,8 @@ integer(i4b),intent(out)::err
 character(*),intent(out)::message
 ! ---------------------------------------------------------------------------------------
 err=0
-CALL BUCKETSIZE()        ! compute bucket size
+! populate DPARAM by calling BUCKETSIZE, MEAN_TIPOW, QBSATURATN and QTIMEDELAY
+CALL BUCKETSIZE()        ! compute bucket size,
 CALL MEAN_TIPOW()        ! mean of the power-transformed topo index
 CALL QBSATURATN()        ! compute baseflow at saturation (used in the SAC percolation model)
 CALL QTIMEDELAY(err,message)        ! compute fraction of runoff in future time steps
