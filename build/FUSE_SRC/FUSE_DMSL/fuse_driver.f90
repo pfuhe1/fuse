@@ -46,7 +46,7 @@ USE multistate, only: ncid_out                            ! NetCDF output file I
 
 USE multibands                                            ! basin band stuctures
 USE multiparam, ONLY: LPARAM, PARATT, NUMPAR              ! parameter metadata structures
-USE multiparam, ONLY: MPARAM_2D, DPARAM_2D                ! structures for gridded parameters
+USE multiparam, ONLY: MPARAM,MPARAM_2D, DPARAM_2D         ! structures for parameters
 USE multistate, only: gState                              ! gridded state variables
 USE multistate, only: gState_3d                           ! gridded state variables with a time dimension
 USE multiroute, ONLY: AROUTE                              ! model routing structures
@@ -100,6 +100,7 @@ CHARACTER(LEN=1024)                    :: MESSAGE         ! error message
 CHARACTER(LEN=6)                       :: SPATIAL_OPTION  ! spatial option (catch or grid)
 INTEGER(I4B),PARAMETER                 :: LUMPED=0        ! named variable for lumped simulations TODO:still needed?
 INTEGER(I4B),PARAMETER                 :: DISTRIBUTED=1   ! named variable for distributed simulations TODO:still needed?
+INTEGER(I4B)                           :: iSpat1,iSpat2   ! loop through spatial dimensions
 ! define model output
 LOGICAL(LGT)                           :: OUTPUT_FLAG     ! .TRUE. = write time series output
 INTEGER(I4B)                           :: ONEMOD=1        ! just specify one model
@@ -392,8 +393,19 @@ IF(fuse_mode == 'run_def')THEN ! run FUSE with default parameter values
 
   OUTPUT_FLAG=.TRUE.
 
+  ! transfer parameter set APAR to MPARAM and then MPARAM_2D
+  CALL PUT_PARSET(APAR)                ! put parameter set into MPARAM
+
+  DO iSpat2=1,nSpat2
+    DO iSpat1=1,nSpat1
+
+      MPARAM_2D(iSpat1,iSpat2) = MPARAM ! use MPARAM to populate MPARAM_2D
+
+    END DO
+  END DO
+
   print *, 'Running FUSE with default parameter values'
-  CALL FUSE_RMSE(APAR,GRID_FLAG,NCID_FORC,RMSE,OUTPUT_FLAG,NUMPSET)
+  CALL RUN_FUSE(MPARAM_2D,GRID_FLAG,NCID_FORC,OUTPUT_FLAG,1)
   print *, 'Done running FUSE with default parameter values'
 
 ELSE IF(fuse_mode == 'run_pre_catch')THEN ! run FUSE with pre-defined parameter values
