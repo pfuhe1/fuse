@@ -264,8 +264,8 @@ CALL ASSIGN_FLX()        ! flux definitions are stored in module model_defn
 CALL ASSIGN_PAR()        ! parameter definitions are stored in module multiparam
 
 ! Compute derived model parameters (bucket sizes, etc.)
-CALL PAR_DERIVE(ERR,MESSAGE)
-IF (ERR.NE.0) WRITE(*,*) TRIM(MESSAGE); IF (ERR.GT.0) STOP
+! CALL PAR_DERIVE(ERR,MESSAGE) <- now done by RUN_FUSE
+! IF (ERR.NE.0) WRITE(*,*) TRIM(MESSAGE); IF (ERR.GT.0) STOP
 
 ! Define output and parameter files: TODO: evaluate if this is still needed
 ONEMOD=1       ! one file per model (i.e., model dimension = 1)
@@ -366,13 +366,13 @@ ELSE IF(fuse_mode == 'run_best')THEN  ! run FUSE with best (lowest RMSE) paramet
 
 ELSE
 
-  print *, 'Unexpected fuse_mode!'
+  print *, 'Unexpected fuse_mode: ', fuse_mode
 
 ENDIF
 
-CALL DEF_PARAMS(NUMPSET)                ! define model parameters (initial CREATE)
-CALL DEF_SSTATS()                            ! define summary statistics (REDEF)
-CALL DEF_OUTPUT(nSpat1,nSpat2,NUMPSET,numtim_sim)    ! define model output time series (REDEF)
+CALL DEF_PARAMS(NUMPSET)               ! Define NetCDF output files - parameter variables
+CALL DEF_SSTATS()                      ! Define NetCDF output files - summary statistics
+CALL DEF_OUTPUT(nSpat1,nSpat2,NUMPSET,numtim_sim)   ! Define NetCDF output files - time-varying model output
 
 ! ---------------------------------------------------------------------------------------
 ! RUN FUSE IN DESIRED MODE
@@ -424,7 +424,7 @@ ELSE IF(fuse_mode == 'run_pre_dist')THEN ! run FUSE with pre-defined parameter v
 
  FNAME_NETCDF_PARA_PRE=TRIM(OUTPUT_PATH)//TRIM(file_para_dist)
 
- PRINT *, 'Loading distributed parameters from: ',TRIM(FNAME_NETCDF_PARA_PRE)
+ ! load distributed parameter
  CALL GET_DIST_PARAM(FNAME_NETCDF_PARA_PRE,NUMPAR,MPARAM_2D)
 
  print *, 'Running FUSE with distributed parameter values'
@@ -480,7 +480,7 @@ ELSE IF(fuse_mode == 'run_best')THEN ! run FUSE with best (lowest RMSE) paramete
 
 ELSE
 
-  print *, 'Unexpected fuse_mode:',fuse_mode
+  print *, 'Unexpected fuse_mode: ',fuse_mode
   stop
 
 ENDIF

@@ -33,10 +33,10 @@ MODULE FUSE_RMSE_MODULE
     REAL(SP),INTENT(OUT)                   :: RMSE           ! root mean squared error
 
     CALL PUT_PARSET(XPAR)                                    ! populate MPARAM
-    MPARAM_2D(1,1)=MPARAM
+    MPARAM_2D(1,1)=MPARAM                                    ! copy parameter set to MPARAM_2D
 
     CALL RUN_FUSE(MPARAM_2D,GRID_FLAG,NCID_FORC,OUTPUT_FLAG,IPSET,MPARAM_FLAG)
-    CALL MEAN_STATS() ! calculate performance metrics
+    CALL MEAN_STATS()         ! calculate performance metrics and populate MSTATS
     RMSE = MSTATS%RAW_RMSE
 
   END SUBROUTINE FUSE_RMSE
@@ -148,12 +148,9 @@ MODULE FUSE_RMSE_MODULE
       DO iSpat1=1,nSpat1
 
         ! add parameter set to the data structure, i.e., populate MPARAM
-        !CALL PUT_PARSET(XPAR)
-        !PRINT *, 'Parameter set added to MPARAM'
         MPARAM=PAR_STR(iSpat1,iSpat2)
-        !PRINT *, 'Using the following values in MPARAM', MPARAM
 
-        ! compute derived model parameters (bucket sizes, etc.), i.e., populate
+        ! compute derived model parameters (bucket sizes, etc.), i.e. populate
         ! DPARAM based on MPARAM
         CALL PAR_DERIVE(ERR,MESSAGE)
         IF (ERR.NE.0) WRITE(*,*) TRIM(MESSAGE); IF (ERR.GT.0) STOP

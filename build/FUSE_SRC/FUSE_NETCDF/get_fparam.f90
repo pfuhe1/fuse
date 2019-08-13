@@ -132,12 +132,12 @@ include 'netcdf.inc'                                  ! use netCDF libraries
 ! check that the file exists
 INQUIRE(FILE=TRIM(NETCDF_FILE),EXIST=LEXIST)
 IF (.NOT.LEXIST) THEN
- print *, 'The NetCDF file containing the predefined parameter set does not exist:'
+ print *, 'The NetCDF file containing the distributed parameter values does not exist:'
  print *, TRIM(NETCDF_FILE)
  STOP
 ENDIF
 
- print *, 'Opening parameter file:', TRIM(NETCDF_FILE)
+ print *, 'Loading distributed parameters from: ', TRIM(NETCDF_FILE)
 
  ! open parameter file
  IERR = NF_OPEN(TRIM(NETCDF_FILE),NF_NOWRITE,NCID); CALL HANDLE_ERR(IERR)
@@ -148,9 +148,16 @@ ENDIF
       DO IPAR=1,NUMPAR       ! loop through parameters
 
         ! get parameter id
-        IERR = NF_INQ_VARID(NCID,TRIM(LPARAM(IPAR)%PARNAME),IVARID); CALL HANDLE_ERR(IERR)
+        IERR = NF_INQ_VARID(NCID,TRIM(LPARAM(IPAR)%PARNAME),IVARID)
 
-        ! get parameter value
+        IF(IERR.NE.0) THEN
+          PRINT *, 'Error: parameter ',TRIM(LPARAM(IPAR)%PARNAME),' is missing'
+          STOP
+        ENDIF
+
+        CALL HANDLE_ERR(IERR)
+
+        ! get parameter value and save it in XPAR
         INDX = (/iSpat1,iSpat2/)
         IERR = NF_GET_VAR1_DOUBLE(NCID,IVARID,INDX,APAR); CALL HANDLE_ERR(IERR)
         XPAR(IPAR) = APAR
@@ -163,7 +170,7 @@ ENDIF
     END DO
   END DO
 
- PRINT *, 'Predefined parameter set loaded into PARAM_2D!'
+ PRINT *, 'Distributed parameter values successfully loaded!'
 
  ! close NetCDF file
 IERR = NF_CLOSE(NCID)
