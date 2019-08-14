@@ -162,6 +162,7 @@ MODULE FUSE_RMSE_MODULE
 
             IF(PAR_VAL.LT.BL(IPAR)) THEN
               PRINT *, 'Error: value for parameter ',TRIM(LPARAM(IPAR)%PARNAME),' (',PAR_VAL,') is smaller than lower bound(',BL(IPAR),')'
+              STOP
             ENDIF
 
             IF(PAR_VAL.GT.BU(IPAR)) THEN
