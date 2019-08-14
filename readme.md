@@ -34,7 +34,7 @@ We recommend that you follow the steps A to F below to run FUSE for the catchmen
    1. defining the name of the master directory (line 10),
    2. defining the fortran compiler (line 202),
    3. defining the path to the NetCDF libraries (lines 204-225, note that the NetCDF libraries should be compiled using the same compiler you are using to compile FUSE).
- 1. Compile the SCE code (see Section F below).
+ 1. Compile the SCE code (see Section H below).
  1. Compile the FUSE code (type `make`).
  1. Change to `$(MASTER)/bin/` and try running FUSE by typing `./fuse.exe`. If the output is `1st command-line argument is missing (fileManager)`, you have probably compiled FUSE correctly. 
  
@@ -104,7 +104,7 @@ then using spatially distributed parameter values over the grid:
 
 The file `cesm1-cam5_902_para_dist.nc` contains the distributed parameter values and must be located in the `output` folder. Note that with the current code i) the output parameter files (e.g., `*para_def.nc`) are empty and ii) it is not checked whether parameter values are within the prescribed realistic intervals.
    
-## F. Compile SCE
+## H. Compile SCE
 The code of the shuffled complex evolution method (`$(MASTER)/build/FUSE_SRC/FUSE_SCE/sce.f`) was written in F77, so it must be compiled separately. If you use `ifort`, try the following flags:
   ```
   ifort -O2 -c -fixed sce_16plus.f
