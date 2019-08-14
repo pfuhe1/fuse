@@ -149,44 +149,48 @@ MODULE FUSE_RMSE_MODULE
     DO iSpat2=1,nSpat2
       DO iSpat1=1,nSpat1
 
-        ! add parameter set to the data structure, i.e., populate MPARAM
-        MPARAM=PAR_STR(iSpat1,iSpat2)
+        ! only initialize model states within domain defined by elev_mask
+        IF(.NOT.elev_mask(iSpat1,iSpat2))THEN
 
-        ! check parameter values are within interval bounds
-        DO IPAR=1,NUMPAR       ! loop through parameters
+          ! add parameter set to the data structure, i.e., populate MPARAM
+          MPARAM=PAR_STR(iSpat1,iSpat2)
 
-          PAR_VAL=PAREXTRACT(LPARAM(IPAR)%PARNAME) ! retrieve parameter value
+          ! check parameter values are within interval bounds
+          DO IPAR=1,NUMPAR       ! loop through parameters
 
-          IF(PAR_VAL.LT.BL(IPAR)) THEN
-            PRINT *, 'Error: value for parameter ',TRIM(LPARAM(IPAR)%PARNAME),' (',PAR_VAL,') is smaller than lower bound(',BL(IPAR),')'
-          ENDIF
+            PAR_VAL=PAREXTRACT(LPARAM(IPAR)%PARNAME) ! retrieve parameter value
 
-          IF(PAR_VAL.GT.BU(IPAR)) THEN
-            PRINT *, 'Error: value for parameter ',TRIM(LPARAM(IPAR)%PARNAME),' (',PAR_VAL,') is greater than upper bound(',BU(IPAR),')'
-            STOP
-          ENDIF
+            IF(PAR_VAL.LT.BL(IPAR)) THEN
+              PRINT *, 'Error: value for parameter ',TRIM(LPARAM(IPAR)%PARNAME),' (',PAR_VAL,') is smaller than lower bound(',BL(IPAR),')'
+            ENDIF
 
-        END DO
+            IF(PAR_VAL.GT.BU(IPAR)) THEN
+              PRINT *, 'Error: value for parameter ',TRIM(LPARAM(IPAR)%PARNAME),' (',PAR_VAL,') is greater than upper bound(',BU(IPAR),')'
+              STOP
+            ENDIF
 
-        ! compute derived model parameters (bucket sizes, etc.), i.e. populate
-        ! DPARAM based on MPARAM
-        CALL PAR_DERIVE(ERR,MESSAGE)
-        IF (ERR.NE.0) WRITE(*,*) TRIM(MESSAGE); IF (ERR.GT.0) STOP
-        DPARAM_2D(iSpat1,iSpat2)=DPARAM
-        !PRINT *, 'Derived parameters added DPARAM_2D(iSpat1,iSpat2):'
-
-        ! initialise model states
-        CALL INIT_STATE(fracState0)             ! define FSTATE at fraction (FRAC) of capacity - curently 25%
-        gState_3d(iSpat1,iSpat2,1) = FSTATE     ! put the state into the 3_d structure
-
-        ! initialize elevations bands if snow module is on
-        IF (SMODL%iSNOWM.EQ.iopt_temp_index) THEN
-          DO IBANDS=1,N_BANDS
-            MBANDS_VAR_4d(iSpat1,iSpat2,IBANDS,1)%SWE=0.0_sp         ! band snowpack water equivalent (mm)
-            MBANDS_VAR_4d(iSpat1,iSpat2,IBANDS,1)%SNOWACCMLTN=0.0_sp ! new snow accumulation in band (mm day-1)
-            MBANDS_VAR_4d(iSpat1,iSpat2,IBANDS,1)%SNOWMELT=0.0_sp    ! snowmelt in band (mm day-1)
-            MBANDS_VAR_4d(iSpat1,iSpat2,IBANDS,1)%DSWE_DT=0.0_sp     ! rate of change of band SWE (mm day-1)
           END DO
+
+          ! compute derived model parameters (bucket sizes, etc.), i.e. populate
+          ! DPARAM based on MPARAM
+          CALL PAR_DERIVE(ERR,MESSAGE)
+          IF (ERR.NE.0) WRITE(*,*) TRIM(MESSAGE); IF (ERR.GT.0) STOP
+          DPARAM_2D(iSpat1,iSpat2)=DPARAM
+          !PRINT *, 'Derived parameters added DPARAM_2D(iSpat1,iSpat2):'
+
+          ! initialise model states
+          CALL INIT_STATE(fracState0)             ! define FSTATE at fraction (FRAC) of capacity - curently 25%
+          gState_3d(iSpat1,iSpat2,1) = FSTATE     ! put the state into the 3_d structure
+
+          ! initialize elevations bands if snow module is on
+          IF (SMODL%iSNOWM.EQ.iopt_temp_index) THEN
+            DO IBANDS=1,N_BANDS
+              MBANDS_VAR_4d(iSpat1,iSpat2,IBANDS,1)%SWE=0.0_sp         ! band snowpack water equivalent (mm)
+              MBANDS_VAR_4d(iSpat1,iSpat2,IBANDS,1)%SNOWACCMLTN=0.0_sp ! new snow accumulation in band (mm day-1)
+              MBANDS_VAR_4d(iSpat1,iSpat2,IBANDS,1)%SNOWMELT=0.0_sp    ! snowmelt in band (mm day-1)
+              MBANDS_VAR_4d(iSpat1,iSpat2,IBANDS,1)%DSWE_DT=0.0_sp     ! rate of change of band SWE (mm day-1)
+            END DO
+          ENDIF
         ENDIF
       END DO
     END DO
@@ -242,11 +246,11 @@ MODULE FUSE_RMSE_MODULE
       DO iSpat2=1,nSpat2
         DO iSpat1=1,nSpat1
 
-          ! load forcing data
-          MFORCE = gForce_3d(iSpat1,iSpat2,itim_sub)      ! assign model forcing data
-
-          ! only run FUSE for grid points in domain and for which forcing available
+          ! only run FUSE within domain defined by elev_mask
           IF(.NOT.elev_mask(iSpat1,iSpat2))THEN
+
+            ! load forcing data
+            MFORCE = gForce_3d(iSpat1,iSpat2,itim_sub)      ! assign model forcing data
 
             ! load parameters values
             MPARAM=MPARAM_2D(iSpat1,iSpat2)
