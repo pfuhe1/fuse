@@ -88,6 +88,7 @@ MODULE FUSE_RMSE_MODULE
     USE get_gforce_module, ONLY:get_gforce_3d                ! get gridded forcing data for a range of time steps
     USE getPETgrid_module, ONLY:getPETgrid                   ! get gridded PET
     USE par_insert_module                                    ! insert parameters into data structures
+    USE parextract_module                                    ! extract model parameters
     USE str_2_xtry_module                                    ! provide access to the routine str_2_xtry
     USE xtry_2_str_module                                    ! provide access to the routine xtry_2_str
 
@@ -101,7 +102,6 @@ MODULE FUSE_RMSE_MODULE
     IMPLICIT NONE
 
     ! input
-    !REAL(SP),DIMENSION(:),INTENT(IN)       :: XPAR          ! model parameter set
     TYPE(PARADJ), DIMENSION(:,:), INTENT(IN):: PAR_STR       ! parmeter structure
     LOGICAL(LGT), INTENT(IN)               :: GRID_FLAG      ! .TRUE. if running FUSE on a grid
     INTEGER(I4B), INTENT(IN)               :: NCID_FORC      ! NetCDF ID for the forcing file
@@ -110,6 +110,7 @@ MODULE FUSE_RMSE_MODULE
     LOGICAL(LGT), INTENT(IN), OPTIONAL     :: MPARAM_FLAG    ! .FALSE. (used to turn off writing statistics) - TODO: still needed?
 
     ! internal
+    REAL(SP)                               :: PAR_VAL        ! value of one parameter
     REAL(SP)                               :: RMSE           ! root mean squared error
     LOGICAL(lgt),PARAMETER                 :: computePET=.FALSE. ! flag to compute PET
     REAL(SP)                               :: T1,T2          ! CPU time
@@ -133,6 +134,7 @@ MODULE FUSE_RMSE_MODULE
     INTEGER(I4B),PARAMETER::UNT=6
 
     ! ---------------------------------------------------------------------------------------
+
     ! allocate state vectors
     ALLOCATE(STATE0(NSTATE),STATE1(NSTATE),STAT=IERR)
     IF (IERR.NE.0) STOP ' problem allocating space for state vectors in fuse_rmse '
@@ -149,6 +151,22 @@ MODULE FUSE_RMSE_MODULE
 
         ! add parameter set to the data structure, i.e., populate MPARAM
         MPARAM=PAR_STR(iSpat1,iSpat2)
+
+        ! check parameter values are within interval bounds
+        DO IPAR=1,NUMPAR       ! loop through parameters
+
+          PAR_VAL=PAREXTRACT(LPARAM(IPAR)%PARNAME) ! retrieve parameter value
+
+          IF(PAR_VAL.LT.BL(IPAR)) THEN
+            PRINT *, 'Error: value for parameter ',TRIM(LPARAM(IPAR)%PARNAME),' (',PAR_VAL,') is smaller than lower bound(',BL(IPAR),')'
+          ENDIF
+
+          IF(PAR_VAL.GT.BU(IPAR)) THEN
+            PRINT *, 'Error: value for parameter ',TRIM(LPARAM(IPAR)%PARNAME),' (',PAR_VAL,') is greater than upper bound(',BU(IPAR),')'
+            STOP
+          ENDIF
+
+        END DO
 
         ! compute derived model parameters (bucket sizes, etc.), i.e. populate
         ! DPARAM based on MPARAM

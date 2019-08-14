@@ -45,7 +45,7 @@ USE multiforce, only: ncid_var                            ! NetCDF forcing varia
 USE multistate, only: ncid_out                            ! NetCDF output file ID
 
 USE multibands                                            ! basin band stuctures
-USE multiparam, ONLY: LPARAM, PARATT, NUMPAR              ! parameter metadata structures
+USE multiparam, ONLY: LPARAM, PARATT, NUMPAR, BL, BU      ! parameter metadata structures
 USE multiparam, ONLY: MPARAM,MPARAM_2D, DPARAM_2D         ! structures for parameters
 USE multistate, only: gState                              ! gridded state variables
 USE multistate, only: gState_3d                           ! gridded state variables with a time dimension
@@ -118,8 +118,7 @@ INTEGER(I4B)                           :: ITIM    ! loop thru time steps
 INTEGER(I4B)                           :: IPAR    ! loop thru model parameters
 INTEGER(I4B)                           :: IPSET   ! loop thru model parameter sets
 TYPE(PARATT)                           :: PARAM_META ! parameter metadata (model parameters)
-REAL(SP), DIMENSION(:), ALLOCATABLE    :: BL      ! vector of lower parameter bounds
-REAL(SP), DIMENSION(:), ALLOCATABLE    :: BU      ! vector of upper parameter bounds
+
 REAL(SP), DIMENSION(:), ALLOCATABLE    :: APAR    ! model parameter set
 INTEGER(KIND=4)                        :: ISEED   ! seed for the random sequence
 REAL(KIND=4),DIMENSION(:), ALLOCATABLE :: URAND   ! vector of quasi-random numbers U[0,1]
@@ -387,7 +386,12 @@ DO IPAR=1,NUMPAR
  BL(IPAR)   = PARAM_META%PARLOW  ! lower boundary
  BU(IPAR)   = PARAM_META%PARUPP  ! upper boundary
  APAR(IPAR) = PARAM_META%PARDEF  ! initialise APAR using default parameter values
+
+ !PRINT *, IPAR, LPARAM(IPAR)%PARNAME
+
 END DO
+
+!APAR(11)=0.001 ! change TIMEDELAY
 
 IF(fuse_mode == 'run_def')THEN ! run FUSE with default parameter values
 

@@ -172,5 +172,7 @@ MODULE multiparam
  TYPE(PAR_ID), DIMENSION(MAXPAR)       :: LPARAM      ! list of model parameter names
  INTEGER(I4B)                          :: NUMPAR      ! number of model parameters for current model
  INTEGER(I4B)                          :: SOBOL_INDX  ! code to re-assemble Sobol parameters
+ REAL(SP), DIMENSION(:), ALLOCATABLE    :: BL         ! vector of lower parameter bounds
+ REAL(SP), DIMENSION(:), ALLOCATABLE    :: BU         ! vector of upper parameter bounds
  ! --------------------------------------------------------------------------------------
 END MODULE multiparam
