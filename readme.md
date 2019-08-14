@@ -61,7 +61,7 @@ Note that the dimension of the NetCDF files will determine if FUSE is run at the
    
 ## E. Execute FUSE
 
-Run FUSE unsing default parameter values at the catchment scale:
+Run FUSE using default parameter values at the catchment scale:
 ```
 ./fuse.exe fm_catch.txt us_09066300 run_def
 ```
@@ -88,7 +88,7 @@ Running FUSE in its different modes will create the following files in the `outp
 
 ## G. Run FUSE for the grid case study
 
-Download the data for the grid scale case study (see `FUSE modes and case studies` section) and follow the same steps as for the catchment scale case study. 
+Download the data for the grid scale case study (see `FUSE modes and case studies` section) and modify `fm_grid.txt` following thesteps described in section C for `fm_catch.txt`. 
 
 Run FUSE using default parameter values over the grid:
 
@@ -102,7 +102,7 @@ then using spatially distributed parameter values over the grid:
 ./fuse.exe fm_grid.txt cesm1-cam5 run_pre_dist cesm1-cam5_902_para_dist.nc
 ```
 
-Note that with the current code i) the output parameter files (e.g., `*para_def.nc`) are empty and ii) it is not checked whether parameter values are within the prescribed realistic intervals.
+The file `cesm1-cam5_902_para_dist.nc` contains the distributed parameter values and must be located in the `output` folder. Note that with the current code i) the output parameter files (e.g., `*para_def.nc`) are empty and ii) it is not checked whether parameter values are within the prescribed realistic intervals.
    
 ## F. Compile SCE
 The code of the shuffled complex evolution method (`$(MASTER)/build/FUSE_SRC/FUSE_SCE/sce.f`) was written in F77, so it must be compiled separately. If you use `ifort`, try the following flags:
