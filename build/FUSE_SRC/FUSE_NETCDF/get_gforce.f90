@@ -31,10 +31,13 @@ contains
                            INPUT_PATH
  USE multiforce,only:forcefile,vname_aprecip           ! model forcing structures
  USE multiforce,only:nspat1,nspat2,numtim_in           ! dimension lengths
+ USE multiforce,only:GRID_FLAG                         ! .true. if distributed
  USE multiforce,only:latitude,longitude                ! dimension arrays
- USE multiforce,only:time_steps,julian_time_steps      ! dimension arrays
+ USE multiforce,only:time_steps,julian_day_input       ! dimension arrays
  USE multiforce,only:latUnits,lonUnits,timeUnits       ! units string for time
  USE multiforce,only:vname_dtime                       ! variable name: time sice reference time
+ USE multiforce, only: nForce, nInput                  ! number of parameter set and their names
+ USE multiforce, only: NA_VALUE                        ! NA_VALUE for the forcing
 
  IMPLICIT NONE
  ! input
@@ -79,7 +82,27 @@ contains
 
  end do
 
- allocate(longitude(nspat1),latitude(nspat2),time_steps(numtim_in),julian_time_steps(numtim_in))
+ ! define the spatial flag
+ PRINT *, ' '
+ if(nSpat1.GT.1.OR.nSpat2.GT.1) THEN
+   PRINT *, '### FUSE set to run in grid mode'
+   GRID_FLAG=.TRUE.
+   nInput=3   ! number of variables to be retrieved from input file (P, T, PET)
+
+ ELSE
+
+   PRINT *, '### FUSE set to run in catchment mode'
+   GRID_FLAG=.FALSE.
+   nInput=4   ! number of variables to be retrieved from input file (P, T, PET, Q)
+
+ ENDIF
+
+ print*, 'spatial dimensions of the grid= ', nSpat1, 'x' ,nSpat2
+ print*, 'NA_VALUE = ', NA_VALUE
+ print*, 'GRID_FLAG = ', GRID_FLAG
+
+ ! allocate arrays
+ allocate(longitude(nspat1),latitude(nspat2),time_steps(numtim_in),julian_day_input(numtim_in))
 
  ! get longitude
  ierr = nf90_inq_varid(ncid, 'longitude', iVarID)
@@ -432,6 +455,5 @@ contains
  if(ierr/=0)then; message=trim(message)//'problem deallocating space for gTemp'; return; endif
 
  end subroutine get_gforce_3d
-
 
 end module get_gforce_module

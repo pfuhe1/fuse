@@ -78,6 +78,7 @@ MODULE multiforce
   ! dimension information
   INTEGER(i4b)                          :: nSpat1=-1                 ! number of points in 1st spatial dimension
   INTEGER(i4b)                          :: nSpat2=-1                 ! number of points in 2nd spatial dimension
+  LOGICAL(LGT)                          :: GRID_FLAG                 ! spatial flag .true. if grid
   REAL(sp)                              :: xlon                      ! longitude (degrees) for PET computation
   REAL(sp)                              :: ylat                      ! latitude (degrees) for PET computation
   REAL(sp),dimension(:),allocatable     :: latitude                  ! latitude (degrees)
@@ -85,7 +86,7 @@ MODULE multiforce
   CHARACTER(len=strLen),dimension(:),allocatable   :: name_psets     ! name of parameter sets
   INTEGER(I4B)                          :: NUMPSET                   ! number of parameter sets
   REAL(sp),dimension(:),allocatable     :: time_steps                ! time steps (days)
-  REAL(sp),dimension(:),allocatable     :: julian_time_steps         ! time steps (julian days)
+  REAL(sp),dimension(:),allocatable     :: julian_day_input         ! time steps (julian days)
   CHARACTER(len=strLen)                 :: latUnits                  ! units string for latitude
   CHARACTER(len=strLen)                 :: lonUnits                  ! units string for longitude
   CHARACTER(len=strLen)                 :: timeUnits                 ! units string for time

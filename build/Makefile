@@ -7,7 +7,7 @@
 #========================================================================
 
 # Define core directory below which everything resides
-F_MASTER = /glade/u/home/naddor/fuse/
+F_MASTER = /home/naddor/fuse/
 
 # Core directory that contains FUSE source code
 F_KORE_DIR = $(F_MASTER)build/FUSE_SRC/
@@ -150,6 +150,7 @@ FUSE_MODRUN= \
 	clrsky_rad.f90 \
 	getPETgrid.f90 \
 	get_mbands.f90 \
+	get_time_indices.f90\
 	initfluxes.f90 \
 	set_all.f90 \
 	ode_int.f90 \
