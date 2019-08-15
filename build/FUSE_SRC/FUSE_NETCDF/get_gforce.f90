@@ -99,7 +99,6 @@ contains
 
  print*, 'spatial dimensions of the grid= ', nSpat1, 'x' ,nSpat2
  print*, 'NA_VALUE = ', NA_VALUE
- print*, 'GRID_FLAG = ', GRID_FLAG
 
  ! allocate arrays
  allocate(longitude(nspat1),latitude(nspat2),time_steps(numtim_in),julian_day_input(numtim_in))

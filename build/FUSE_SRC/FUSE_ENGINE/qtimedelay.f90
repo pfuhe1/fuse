@@ -47,7 +47,6 @@ SELECT CASE(SMODL%iQ_TDH)
    CUMPROB                   = GAMMP(ALPHA,ALAMB*TFUTURE)    ! cumulative probability at JTIM
    DPARAM%FRAC_FUTURE(JTIM)  = MAX(0._SP, CUMPROB-PSAVE)     ! probability between JTIM-1 and JTIM
    PSAVE                     = CUMPROB                       ! cumulative probability at JTIM-1
-   !WRITE(*,'(3(F11.5))') TFUTURE, DPARAM%FRAC_FUTURE(JTIM), CUMPROB
    IF(DPARAM%FRAC_FUTURE(JTIM)<EPSILON(1._SP))EXIT
   END DO
   DPARAM%NTDH_NEED = MIN(JTIM,NTDH)

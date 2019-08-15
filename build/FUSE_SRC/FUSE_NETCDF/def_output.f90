@@ -55,10 +55,10 @@ SUBROUTINE DEF_OUTPUT(nSpat1,nSpat2,NPSET,NTIM)
   CALL VARDESCRIBE()  ! get list of variable descriptions
   ! ---------------------------------------------------------------------------------------
 ! put file in define mode
-  print *, 'Create NetCDF file for runs:'
-  PRINT *, FNAME_NETCDF_RUNS
+  print *, 'Create NetCDF file for runs:', TRIM(FNAME_NETCDF_RUNS)
 
   IERR = NF_CREATE(TRIM(FNAME_NETCDF_RUNS),NF_CLOBBER,ncid_out); CALL HANDLE_ERR(IERR)
+
   !IERR = NF_OPEN(TRIM(FNAME_NETCDF_RUNS),NF_WRITE,ncid_out); CALL HANDLE_ERR(IERR)
   !IERR = NF_REDEF(ncid_out); CALL HANDLE_ERR(IERR)
 

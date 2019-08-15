@@ -48,7 +48,7 @@ MODULE multiparam
   TYPE(PARATT)                         :: FPRIMQB     ! SAC: fraction of baseflow in primary resvr (-)
   ! evaporation (adjustable)
   TYPE(PARATT)                         :: RTFRAC1     ! fraction of roots in the upper layer (-)
-  ! percolation (adjustable) 
+  ! percolation (adjustable)
   TYPE(PARATT)                         :: PERCRTE     ! percolation rate (mm day-1)
   TYPE(PARATT)                         :: PERCEXP     ! percolation exponent (-)
   TYPE(PARATT)                         :: SACPMLT     ! multiplier in the SAC model for dry lower layer (-)
@@ -75,7 +75,7 @@ MODULE multiparam
   TYPE(PARATT)                         :: MFMAX       ! maximum melt factor (mm melt deg C.-1 6hrs-1)
   TYPE(PARATT)                         :: MFMIN       ! minimum melt factor (mm melt deg C.-1 6hrs-1)
   TYPE(PARATT)                         :: PXTEMP      ! rain-snow partition temperature (deg. C)
-  TYPE(PARATT)                         :: OPG         ! precipitation gradient (-) 
+  TYPE(PARATT)                         :: OPG         ! precipitation gradient (-)
   TYPE(PARATT)                         :: LAPSE       ! temperature gradient (deg. C)
  ENDTYPE PARINFO
  ! --------------------------------------------------------------------------------------
@@ -126,7 +126,7 @@ MODULE multiparam
   REAL(SP)                             :: MFMAX       ! maximum melt factor (mm melt deg C.-1 6hrs-1)
   REAL(SP)                             :: MFMIN       ! minimum melt factor (mm melt deg C.-1 6hrs-1)
   REAL(SP)                             :: PXTEMP      ! rain-snow partition temperature (deg. C)
-  REAL(SP)                             :: OPG         ! precipitation gradient (-) 
+  REAL(SP)                             :: OPG         ! precipitation gradient (-)
   REAL(SP)                             :: LAPSE       ! temperature gradient (deg. C)
  END TYPE PARADJ
  ! --------------------------------------------------------------------------------------
@@ -150,8 +150,8 @@ MODULE multiparam
   REAL(SP)                             :: POWLAMB     ! mean value of the power-transformed topographic index (m**(1/n))
   REAL(SP)                             :: MAXPOW      ! max value of the power-transformed topographic index (m**(1/n))
   ! routing
-  REAL(SP), DIMENSION(NTDH_MAX)        :: FRAC_FUTURE ! fraction of runoff in future time steps
   INTEGER(I4B)                         :: NTDH_NEED   ! number of time-steps with non-zero routing contribution
+  REAL(SP), DIMENSION(NTDH_MAX)        :: FRAC_FUTURE ! fraction of runoff in future time steps
  END TYPE PARDVD
  ! --------------------------------------------------------------------------------------
  ! (4) LIST OF PARAMETERS FOR A GIVEN MODEL
@@ -162,13 +162,17 @@ MODULE multiparam
  ! --------------------------------------------------------------------------------------
  ! (5) FINAL DATA STRUCTURES
  ! --------------------------------------------------------------------------------------
- INTEGER(I4B), PARAMETER               :: MAXPAR=50   ! maximum number of parameters for a single model
- TYPE(PARADJ), DIMENSION(:), POINTER   :: APARAM=>null()  ! all model parameter sets; DK/2008/10/21: explicit null
+ INTEGER(I4B), PARAMETER               :: MAXPAR=50   ! maximum number of parameters for a single model- TODO: determine this once the model structure has been selected
+ TYPE(PARADJ), DIMENSION(:), POINTER   :: APARAM=>null()  ! all model parameter sets; DK/2008/10/21: explicit null - TODO: APARAM probably not needed anymore
  TYPE(PARADJ)                          :: MPARAM      ! single model parameter set
  TYPE(PARDVD)                          :: DPARAM      ! derived model parameters
+ TYPE(PARADJ), DIMENSION(:,:), POINTER :: MPARAM_2D   ! gridded model parameter set
+ TYPE(PARDVD), DIMENSION(:,:), POINTER :: DPARAM_2D   ! gridded dervied model parameters
  TYPE(PARINFO)                         :: PARMETA     ! parameter metadata (all parameters)
- TYPE(PAR_ID), DIMENSION(MAXPAR)       :: LPARAM      ! list of model parameter names (need to modify to 16 for SCE)
+ TYPE(PAR_ID), DIMENSION(MAXPAR)       :: LPARAM      ! list of model parameter names
  INTEGER(I4B)                          :: NUMPAR      ! number of model parameters for current model
  INTEGER(I4B)                          :: SOBOL_INDX  ! code to re-assemble Sobol parameters
+ REAL(SP), DIMENSION(:), ALLOCATABLE    :: BL         ! vector of lower parameter bounds
+ REAL(SP), DIMENSION(:), ALLOCATABLE    :: BU         ! vector of upper parameter bounds
  ! --------------------------------------------------------------------------------------
 END MODULE multiparam

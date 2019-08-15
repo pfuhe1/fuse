@@ -72,8 +72,8 @@ SELECT CASE(SMODL%iARCH2)  ! (lower layer architecture)
  CASE(iopt_unlimfrc_2,iopt_unlimpow_2,iopt_topmdexp_2,iopt_fixedsiz_2) ! single baseflow reservoir
   TMPSTR%TENS_2  = MIN(TMPSTR%WATR_2, DPARAM%MAXTENS_2)      ! tension storage
   TMPSTR%FREE_2  = MAX(0._sp, TMPSTR%WATR_2 - DPARAM%MAXTENS_2) ! free storage
-  TMPSTR%FREE_2A = missingValue                              ! primary reservoir (undefined) 
-  TMPSTR%FREE_2A = missingValue                              ! secondary reservoir (undefined) 
+  TMPSTR%FREE_2A = missingValue                              ! primary reservoir (undefined)
+  TMPSTR%FREE_2A = missingValue                              ! secondary reservoir (undefined)
  CASE DEFAULT       ! (error check)
   print *, "MDEFN(IMOD)%ARCH2 must be 'tens2pll_2', 'unlimfrc_2', 'unlimpow_2'"
   print *, "  'topmdexp_2', or 'fixedsiz_2'"
