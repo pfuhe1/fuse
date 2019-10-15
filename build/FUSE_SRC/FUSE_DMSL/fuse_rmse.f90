@@ -300,7 +300,7 @@ MODULE FUSE_RMSE_MODULE
 
             ! sanity check
             IF (MROUTE%Q_ROUTED.LT.0._sp) STOP ' Q_ROUTED is less than zero '
-            IF (MROUTE%Q_ROUTED.GT.1000._sp) STOP ' Q_ROUTED is enormous '
+            IF (MROUTE%Q_ROUTED.GT.2000._sp) STOP ' Q_ROUTED is enormous '
 
             ! save the state
             CALL XTRY_2_STR(STATE1,FSTATE)            ! update FSTATE using states at the end of the time step (STATE0)

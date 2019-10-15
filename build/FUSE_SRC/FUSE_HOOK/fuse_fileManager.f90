@@ -26,7 +26,7 @@ CHARACTER(LEN=fusePathLen)  :: MBANDS_INFO       ! info on basin band data files
 CHARACTER(LEN=fusePathLen)  :: MBANDS_NC         ! netcdf file defining the elevation bands
 CHARACTER(LEN=fusePathLen)  :: BATEA_PARAM       ! definition of BATEA parameters ! remove this
 ! content of output directory
-CHARACTER(LEN=64)           :: FMODEL_ID         ! string defining FUSE model
+CHARACTER(LEN=128)           :: FMODEL_ID         ! string defining FUSE model
 CHARACTER(LEN=64)           :: Q_ONLY_STR        ! TRUE = restrict attention to simulated runoff
 LOGICAL                     :: Q_ONLY            ! .TRUE. = restrict attention to simulated runoff
 ! define simulation and evaluation periods
