@@ -160,12 +160,14 @@ MODULE FUSE_RMSE_MODULE
 
             PAR_VAL=PAREXTRACT(LPARAM(IPAR)%PARNAME) ! retrieve parameter value
 
-            IF(PAR_VAL.LT.BL(IPAR)) THEN
+!            IF(PAR_VAL.LT.BL(IPAR)) THEN
+             IF((BL(IPAR)-PAR_VAL)/ABS(PAR_VAL).GT.1e-6) THEN !PFU check allowing for small relative error
               PRINT *, 'Error: value for parameter ',TRIM(LPARAM(IPAR)%PARNAME),' (',PAR_VAL,') is smaller than lower bound(',BL(IPAR),')'
               STOP
             ENDIF
 
-            IF(PAR_VAL.GT.BU(IPAR)) THEN
+!            IF(PAR_VAL.GT.BU(IPAR)) THEN
+             IF((PAR_VAL-BU(IPAR))/ABS(PAR_VAL).GT.1e-6) THEN
               PRINT *, 'Error: value for parameter ',TRIM(LPARAM(IPAR)%PARNAME),' (',PAR_VAL,') is greater than upper bound(',BU(IPAR),')'
               STOP
             ENDIF
